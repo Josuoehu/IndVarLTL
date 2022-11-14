@@ -1,0 +1,163 @@
+{
+  "observables": {
+    "inputs": [
+      {
+        "name": "a",
+        "type": "bool"
+      },
+      {
+        "name": "b",
+        "type": "bool"
+      },
+      {
+        "name": "c",
+        "type": "bool"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "y",
+        "type": "bool"
+      },
+      {
+        "name": "z",
+        "type": "bool"
+      },
+      {
+        "name": "x",
+        "type": "bool"
+      },
+      {
+        "name": "t",
+        "type": "bool"
+      }
+    ],
+    "variables": [
+      {
+        "name": "w",
+        "type": "bool"
+      },
+      {
+        "name": "v",
+        "type": "bool"
+      }
+    ],
+    "constants": [],
+    "types": []
+  },
+  "assumptions": [],
+  "requirements": [
+    {
+      "id": 0,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "a"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "X(v && !t)"
+        }
+      }
+    },
+    {
+      "id": 1,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "!a"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "X(!v && t)"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "v"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "X(!w && z)"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "!v"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "X(w && !z)"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "b && w"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "X(y)"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "!b"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "X(!y)"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "b && c"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "X(x)"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "!b"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "X(!x)"
+        }
+      }
+    }
+  ]
+}

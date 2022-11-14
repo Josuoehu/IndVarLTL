@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<counter-example type="0" id="1" desc="LTL Counterexample" >
+	<node>
+		<state id="1">
+			<value variable="state">s0</value>
+			<value variable="v">FALSE</value>
+			<value variable="out">FALSE</value>
+		</state>
+		<input id="2">
+			<value variable="i">TRUE</value>
+		</input>
+	</node>
+	<node>
+		<state id="2">
+			<value variable="state">s1</value>
+			<value variable="v">FALSE</value>
+			<value variable="out">FALSE</value>
+		</state>
+		<input id="3">
+			<value variable="i">TRUE</value>
+		</input>
+	</node>
+	<node>
+		<state id="3">
+			<value variable="state">s2</value>
+			<value variable="v">FALSE</value>
+			<value variable="out">FALSE</value>
+		</state>
+		<input id="4">
+			<value variable="i">TRUE</value>
+		</input>
+	</node>
+	<node>
+		<state id="4">
+			<value variable="state">s3</value>
+			<value variable="v">FALSE</value>
+			<value variable="out">FALSE</value>
+		</state>
+		<input id="5">
+			<value variable="i">TRUE</value>
+		</input>
+	</node>
+	<node>
+		<state id="5">
+			<value variable="state">s0</value>
+			<value variable="v">TRUE</value>
+			<value variable="out">FALSE</value>
+		</state>
+		<input id="6">
+			<value variable="i">TRUE</value>
+		</input>
+	</node>
+	<node>
+		<state id="6">
+			<value variable="state">s1</value>
+			<value variable="v">TRUE</value>
+			<value variable="out">FALSE</value>
+		</state>
+		<input id="7">
+			<value variable="i">TRUE</value>
+		</input>
+	</node>
+	<node>
+		<state id="7">
+			<value variable="state">s2</value>
+			<value variable="v">TRUE</value>
+			<value variable="out">FALSE</value>
+		</state>
+		<input id="8">
+			<value variable="i">TRUE</value>
+		</input>
+	</node>
+	<node>
+		<state id="8">
+			<value variable="state">s3</value>
+			<value variable="v">TRUE</value>
+			<value variable="out">TRUE</value>
+		</state>
+		<input id="9">
+			<value variable="i">FALSE</value>
+		</input>
+	</node>
+	<node>
+		<state id="9">
+			<value variable="state">s3</value>
+			<value variable="v">TRUE</value>
+			<value variable="out">TRUE</value>
+		</state>
+		<input id="10">
+			<value variable="i">FALSE</value>
+		</input>
+	</node>
+	<node>
+		<state id="10">
+			<value variable="state">s3</value>
+			<value variable="v">TRUE</value>
+			<value variable="out">TRUE</value>
+		</state>
+	</node>
+	<loops> 8 ,9 </loops>
+</counter-example>

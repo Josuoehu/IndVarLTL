@@ -1,0 +1,81 @@
+{
+  "observables": {
+    "inputs": [
+      {
+        "name": "in_right_hand",
+        "type": "bool"
+      },
+      {
+        "name": "in_left_hand",
+        "type": "bool"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "out_lathe",
+        "type": "bool"
+      }
+    ],
+    "constants": [],
+    "variables": [],
+    "types": []
+  },
+  "requirements": [
+    {
+      "id": "1",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "in_right_hand && in_left_hand"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "out_lathe"
+        }
+      }
+    },
+    {
+      "id": "2",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "!in_right_hand && in_left_hand"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!out_lathe"
+        }
+      }
+    },
+    {
+      "id": "4",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "in_right_hand && !in_left_hand"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!out_lathe"
+        }
+      }
+    },
+    {
+      "id": "5",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "!in_right_hand && !in_left_hand"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!out_lathe"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,600 @@
+{
+  "observables": {
+    "inputs": [
+      {
+        "name": "Bt_Encendido",
+        "type": "bool"
+      },
+      {
+        "name": "Bt_Arranque",
+        "type": "bool"
+      },
+      {
+        "name": "Bt_Parada",
+        "type": "bool"
+      },
+      {
+        "name": "Sr_Proximidad",
+        "type": "bool"
+      },
+      {
+        "name": "Bt_Apagado",
+        "type": "bool"
+      },
+      {
+        "name": "Bt_Emergencia",
+        "type": "bool"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Motor",
+        "type": "bool"
+      },
+      {
+        "name": "Ld_Emergencia",
+        "type": "bool"
+      }
+    ],
+    "variables": [
+      {
+        "name": "Estado",
+        "type": "EState"
+      },
+      {
+        "name": "Tiempo_Movimiento",
+        "type": "bool"
+      },
+      {
+        "name": "Tiempo_Espera",
+        "type": "bool"
+      },
+      {
+        "name": "Variable_R17",
+        "type": "bool"
+      },
+      {
+        "name": "Flag_Parada",
+        "type": "bool"
+      },
+      {
+        "name": "Flag_Espera",
+        "type": "bool"
+      }
+    ],
+    "constants": [],
+    "types": [
+      {
+        "name": "EState",
+        "type": "enum",
+        "members": {
+          "Estado_Idle": 0,
+          "Estado_Detenido": 1,
+          "Estado_Movimiento": 2,
+          "Estado_Espera": 3,
+          "Estado_Emergencia": 4
+        }
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "id": 1,
+      "requirement": {
+        "type": "StateMachineDeclaration",
+        "name": "Estado",
+        "states": [
+          "Estado_Idle",
+          "Estado_Detenido",
+          "Estado_Movimiento",
+          "Estado_Espera",
+          "Estado_Emergencia"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Bt_Encendido) && (!Bt_Emergencia) && (!Bt_Apagado)"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Idle",
+          "to": "Estado_Detenido",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Bt_Arranque) && (!Bt_Emergencia) && (!Bt_Apagado)"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Detenido",
+          "to": "Estado_Movimiento",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Tiempo_Movimiento) && (Bt_Parada) && (!Bt_Apagado) && (!Bt_Emergencia)"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Movimiento",
+          "to": "Estado_Espera",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "((Sr_Proximidad) || (Tiempo_Espera)) && (!Bt_Apagado) && (!Bt_Emergencia)"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Espera",
+          "to": "Estado_Detenido",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Bt_Apagado) && (!Bt_Emergencia)"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Idle",
+          "to": "Estado_Idle",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 25,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Bt_Apagado) && (!Bt_Emergencia)"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Detenido",
+          "to": "Estado_Idle",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 26,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Bt_Apagado) && (!Bt_Emergencia)"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Movimiento",
+          "to": "Estado_Idle",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 27,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Bt_Apagado) && (!Bt_Emergencia)"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Espera",
+          "to": "Estado_Idle",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 28,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Bt_Emergencia"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Idle",
+          "to": "Estado_Emergencia",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 29,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Bt_Emergencia"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Detenido",
+          "to": "Estado_Emergencia",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 30,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Bt_Emergencia"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Movimiento",
+          "to": "Estado_Emergencia",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 31,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Bt_Emergencia"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Espera",
+          "to": "Estado_Emergencia",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "!Bt_Encendido && !Bt_Emergencia"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "Estado",
+          "from_": "Estado_Idle",
+          "to": "Estado_Idle",
+          "timing": {
+            "type": "Within",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(Estado == Estado_Movimiento) && (!Flag_Parada) && (!Flag_Espera)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "(Motor) && (!Ld_Emergencia)"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(Estado == Estado_Idle)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "(!Motor) && (!Ld_Emergencia)"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(Estado == Estado_Emergencia)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "(!Motor) && (Ld_Emergencia)"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(Estado == Estado_Detenido)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "(!Motor) && (!Ld_Emergencia)"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(Estado == Estado_Espera) && (!Flag_Parada) && (!Flag_Espera)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "(Motor) && (!Ld_Emergencia)"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Estado == Estado_Movimiento) && (Bt_Parada) && (Tiempo_Movimiento)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "(Variable_R17)"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "Flag_Parada"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Motor"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "Flag_Espera"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Motor"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Variable_R17",
+          "timing": {
+            "type": "AtLeast",
+            "time": "1000"
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "(!Variable_R17) && (Flag_Espera)"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Flag_Espera",
+          "timing": {
+            "type": "AtLeast",
+            "time": "2000"
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Flag_Espera"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(Estado == Estado_Espera) && (Sr_Proximidad) && (!Bt_Emergencia)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Flag_Parada"
+        }
+      }
+    },
+    {
+      "id": 20,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Flag_Parada",
+          "timing": {
+            "type": "AtLeast",
+            "time": 2000
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Flag_Parada"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Estado == Estado_Movimiento) && (!Bt_Parada) && (!Bt_Apagado) && (!Bt_Emergencia)",
+          "timing": {
+            "type": "AtLeast",
+            "time": "5000"
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Tiempo_Movimiento"
+        }
+      }
+    },
+    {
+      "id": 22,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(Estado == Estado_Idle) || (Estado == Estado_Detenido) || (Estado == Estado_Emergencia || Estado == Estado_Espera)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Tiempo_Movimiento"
+        }
+      }
+    },
+    {
+      "id": 23,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "(Estado == Estado_Espera) && (!Sr_Proximidad) && (!Tiempo_Espera) && (!Bt_Emergencia) && (!Bt_Apagado)",
+          "timing": {
+            "type": "AtLeast",
+            "time": "3000"
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Tiempo_Espera"
+        }
+      }
+    },
+    {
+      "id": 24,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(Estado == Estado_Idle) || (Estado == Estado_Detenido) || (Estado == Estado_Emergencia || Estado == Estado_Movimiento)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Tiempo_Espera"
+        }
+      }
+    }
+  ]
+}

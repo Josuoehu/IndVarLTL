@@ -1,0 +1,20 @@
+MODULE main
+
+VAR
+    STATE: {ON ,OFF, WAIT, HEAT, ERROR, X_ERROR};
+IVAR
+    SENSOR: {0,1,2};
+ASSIGN
+    init(STATE) := OFF;
+    next(STATE) :=
+        case
+            STATE = HEAT & SENSOR = 1: {ERROR, X_ERROR};
+            STATE = X_ERROR: ERROR;
+            -- Here the changes proposed in other requirements
+            TRUE: STATE;
+        esac;
+
+FAIRNESS TRUE;
+
+LTLSPEC 
+    F(STATE = ERROR)

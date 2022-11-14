@@ -1,0 +1,16 @@
+ENV
+a,b,c
+SYS
+w,v,x,z,y,t
+
+ASSUMPTIONS
+
+GUARANTEES
+G(a -> X (v & ~t))
+G(~a -> X (~v & t))
+G(v -> X (~w & z))
+G(~v -> X (w & ~z))
+G(b & w -> X y)
+G(~b -> X ~y)
+G(b & c -> X x)
+G(~b -> X ~x)

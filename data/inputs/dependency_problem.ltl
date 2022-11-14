@@ -1,0 +1,11 @@
+ENV
+p
+SYS
+a,b
+
+ASSUMPTIONS
+G(a -> X (p))
+
+GUARANTEES
+G(p -> X (b))
+G((~p) -> X (a))

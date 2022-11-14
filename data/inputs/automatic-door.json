@@ -1,0 +1,377 @@
+{
+  "observables": {
+    "inputs": [
+      {
+        "name": "motion_sensor_1",
+        "type": "bool"
+      },
+      {
+        "name": "motion_sensor_2",
+        "type": "bool"
+      },
+      {
+        "name": "block_door_is_pressed",
+        "type": "bool"
+      },
+      {
+        "name": "auto_clean_is_pressed",
+        "type": "bool"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "open_door_cmd",
+        "type": "bool"
+      },
+      {
+        "name": "close_door_cmd",
+        "type": "bool"
+      },
+      {
+        "name": "emergency_light",
+        "type": "bool"
+      },
+      {
+        "name": "auto_clean_command",
+        "type": "bool"
+      }
+    ],
+    "constants": [],
+    "variables": [
+      {
+        "name": "doors_blocked",
+        "type": "bool"
+      },
+      {
+        "name": "emergency_mode",
+        "type": "bool"
+      },
+      {
+        "name": "door_cmd_request",
+        "type": "EDoorCmd"
+      },
+      {
+        "name": "state",
+        "type": "EState",
+        "initial": "operational"
+      },
+      {
+        "name": "sensors_differ",
+        "type": "bool"
+      }
+    ],
+    "types": [
+      {
+        "name": "EState",
+        "type": "enum",
+        "members": {
+          "operational": 0,
+          "emergency": 1
+        }
+      },
+      {
+        "name": "EDoorCmd",
+        "type": "enum",
+        "members": {
+          "DoorCmdNone": 0,
+          "DoorCmdOpen": 1,
+          "DoorCmdClose": 2
+        }
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "id": 0,
+      "requirement": {
+        "type": "StateMachineDeclaration",
+        "name": "state",
+        "states": [
+          "operational",
+          "emergency"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "open_door_cmd"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!close_door_cmd"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "close_door_cmd"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!open_door_cmd"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(motion_sensor_1 && !motion_sensor_2) || (!motion_sensor_1 && motion_sensor_2)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "sensors_differ"
+        }
+      }
+    },
+    {
+      "id": 20,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "(motion_sensor_1 && motion_sensor_2) || (!motion_sensor_1 && !motion_sensor_2)"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!sensors_differ"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "sensors_differ"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "state",
+          "to": "emergency"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "requirement": {
+        "type": "StandardRequirement",
+        "response": {
+          "type": "Satisfy",
+          "expression": "emergency_mode"
+        },
+        "scope": {
+          "type": "Holds",
+          "expression": "state == emergency"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "requirement": {
+        "type": "StandardRequirement",
+        "response": {
+          "type": "Satisfy",
+          "expression": "!emergency_mode"
+        },
+        "scope": {
+          "type": "Holds",
+          "expression": "state != emergency"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "emergency_mode"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "emergency_light"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "requirement": {
+        "type": "StandardRequirement",
+        "response": {
+          "type": "Satisfy",
+          "expression": "!emergency_light"
+        },
+        "scope": {
+          "type": "Holds",
+          "expression": "!emergency_mode"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "emergency_mode"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "open_door_cmd"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "!sensors_differ",
+          "timing": {
+            "type": "AtLeast",
+            "time": 2
+          }
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "state",
+          "to": "operational",
+          "from_": "emergency"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "block_door_is_pressed"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "doors_blocked"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "doors_blocked"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "open_door_cmd"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "motion_sensor_1 && motion_sensor_2"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "door_cmd_request == DoorCmdOpen",
+          "timing": {
+            "type": "Within",
+            "time": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "!motion_sensor_1 && !motion_sensor_2 && !doors_blocked",
+          "timing": {
+            "type": "AtLeast",
+            "time": 4
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "door_cmd_request == DoorCmdClose"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "sensors_differ"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "door_cmd_request == DoorCmdNone"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "state == operational && door_cmd_request == DoorCmdOpen"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "open_door_cmd"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "requirement": {
+        "type": "StandardRequirement",
+        "response": {
+          "type": "Satisfy",
+          "expression": "close_door_cmd"
+        },
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "state == operational && door_cmd_request == DoorCmdClose"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "state == operational && auto_clean_is_pressed"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "auto_clean_command"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+MODULE main
+
+
+VAR
+	state: {open,closed};
+	p: boolean;
+
+
+      
+INIT
+	(state = closed);
+
+TRANS
+
+
+	(p ->  next(state = open)
+	)
+	&
+	(!p -> next(state = closed)
+	)
+	
+	
+	
+FAIRNESS TRUE;
+
+LTLSPEC
+	!(	
+	 F(state = open)
+	)
+
+

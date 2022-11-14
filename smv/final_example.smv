@@ -1,0 +1,29 @@
+MODULE main
+
+VAR
+speed:{v0, v1, v2};
+at_speed_2: 0..10 ;
+
+IVAR
+right_hand_on: boolean;
+left_hand_on: boolean;
+
+ASSIGN
+init(speed) := v0;
+next(speed) := case 
+    right_hand_on & left_hand_on & speed = v0: v1;
+    right_hand_on & left_hand_on & speed = v1: v2;
+    right_hand_on & left_hand_on & speed = v2 & at_speed_2 < 10: v2;
+    !right_hand_on | !left_hand_on | at_speed_2 = 10: v0;
+    TRUE: speed;
+    esac;
+
+init(at_speed_2) := 0;
+next(at_speed_2) := case
+    right_hand_on & left_hand_on & speed = v1: 1;
+    right_hand_on & left_hand_on & speed = v2 & at_speed_2 < 10: at_speed_2 + 1;
+    !right_hand_on | !left_hand_on | at_speed_2 = 10: 0;
+    TRUE: at_speed_2;
+    esac;
+
+FAIRNESS TRUE;

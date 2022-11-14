@@ -1,0 +1,53 @@
+ENV
+timer_fired_event,OK,user_temp_ge_0_b__,user_temp_le_270_b__,temp_le_270_b__,temp_ge_0_b__
+SYS
+lid_blocked,beeper,cooker_TYPE_cooker_state__be___0,cooker_TYPE_cooker_state__be___1,cooker_TYPE_cooker_state__be___2,cooker_TYPE_op_status__be___0,cooker_TYPE_op_status__be___1,cooker_TYPE_op_status__be___2,set_user_temp_ge_0_b__,set_user_temp_le_270_b__,set_user_temp_eq_0_b__,set_user_temp_eq_user_temp_b__
+
+ASSUMPTIONS
+temp_ge_0_b__
+temp_le_270_b__
+user_temp_ge_0_b__
+user_temp_le_270_b__
+temp_le_270_b__
+temp_ge_0_b__
+user_temp_ge_0_b__
+user_temp_le_270_b__
+
+GUARANTEES
+set_user_temp_ge_0_b__
+~(lid_blocked)
+set_user_temp_le_270_b__
+set_user_temp_eq_0_b__
+~(cooker_TYPE_cooker_state__be___0)
+~(cooker_TYPE_cooker_state__be___1)
+~(cooker_TYPE_cooker_state__be___2)
+G(~((cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & cooker_TYPE_cooker_state__be___2))))
+G(~((cooker_TYPE_cooker_state__be___0 & (cooker_TYPE_cooker_state__be___1 & ~(cooker_TYPE_cooker_state__be___2)))))
+G(~(((cooker_TYPE_cooker_state__be___0 & cooker_TYPE_cooker_state__be___1) & cooker_TYPE_cooker_state__be___2)))
+G((((~(cooker_TYPE_cooker_state__be___0) & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2))) | (~(cooker_TYPE_cooker_state__be___0) & (~(cooker_TYPE_cooker_state__be___1) & cooker_TYPE_cooker_state__be___2))) | (~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & ~(cooker_TYPE_cooker_state__be___2)))) | (((~(cooker_TYPE_cooker_state__be___0) & cooker_TYPE_cooker_state__be___1) & cooker_TYPE_cooker_state__be___2) | ((cooker_TYPE_cooker_state__be___0 & ~(cooker_TYPE_cooker_state__be___1)) & ~(cooker_TYPE_cooker_state__be___2))))
+G(~(((cooker_TYPE_op_status__be___0 & ~(cooker_TYPE_op_status__be___1)) & cooker_TYPE_op_status__be___2)))
+G(~((cooker_TYPE_op_status__be___0 & (cooker_TYPE_op_status__be___1 & ~(cooker_TYPE_op_status__be___2)))))
+G(~(((cooker_TYPE_op_status__be___0 & cooker_TYPE_op_status__be___1) & cooker_TYPE_op_status__be___2)))
+G(((~(cooker_TYPE_op_status__be___0) & (~(cooker_TYPE_op_status__be___1) & ~(cooker_TYPE_op_status__be___2))) | (((~(cooker_TYPE_op_status__be___0) & (~(cooker_TYPE_op_status__be___1) & cooker_TYPE_op_status__be___2)) | ((~(cooker_TYPE_op_status__be___0) & cooker_TYPE_op_status__be___1) & ~(cooker_TYPE_op_status__be___2))) | (~(cooker_TYPE_op_status__be___0) & (cooker_TYPE_op_status__be___1 & cooker_TYPE_op_status__be___2)))) | ((cooker_TYPE_op_status__be___0 & ~(cooker_TYPE_op_status__be___1)) & ~(cooker_TYPE_op_status__be___2)))
+G(((~(cooker_TYPE_cooker_state__be___0) & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2))) & OK) -> (X set_user_temp_eq_user_temp_b__ | X (~(((~(cooker_TYPE_cooker_state__be___0) & ~(cooker_TYPE_cooker_state__be___1)) & ~(cooker_TYPE_cooker_state__be___2))))))
+G(((~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & ~(cooker_TYPE_cooker_state__be___2))) | ((~(cooker_TYPE_cooker_state__be___0) & cooker_TYPE_cooker_state__be___1) & cooker_TYPE_cooker_state__be___2)) -> X ((~((((~(cooker_TYPE_cooker_state__be___0) & cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)) | ((~(cooker_TYPE_cooker_state__be___0) & cooker_TYPE_cooker_state__be___1) & cooker_TYPE_cooker_state__be___2))) | lid_blocked)))
+G((cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2))) -> X ((~((cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))) | beeper)))
+G(~((cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))) -> X ((~(~(((cooker_TYPE_cooker_state__be___0 & ~(cooker_TYPE_cooker_state__be___1)) & ~(cooker_TYPE_cooker_state__be___2)))) | ~(beeper))))
+G((((((~(cooker_TYPE_op_status__be___0) & ~(cooker_TYPE_op_status__be___1)) & ~(cooker_TYPE_op_status__be___2)) & ((~(cooker_TYPE_cooker_state__be___0) & ~(cooker_TYPE_cooker_state__be___1)) & ~(cooker_TYPE_cooker_state__be___2))) | (((~(cooker_TYPE_op_status__be___0) & ~(cooker_TYPE_op_status__be___1)) & cooker_TYPE_op_status__be___2) & ((~(cooker_TYPE_cooker_state__be___0) & ~(cooker_TYPE_cooker_state__be___1)) & cooker_TYPE_cooker_state__be___2))) | (((~(cooker_TYPE_op_status__be___0) & (cooker_TYPE_op_status__be___1 & ~(cooker_TYPE_op_status__be___2))) & ((~(cooker_TYPE_cooker_state__be___0) & cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2))) | (((~(cooker_TYPE_op_status__be___0) & cooker_TYPE_op_status__be___1) & cooker_TYPE_op_status__be___2) & (~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & cooker_TYPE_cooker_state__be___2))))) | (((cooker_TYPE_op_status__be___0 & ~(cooker_TYPE_op_status__be___1)) & ~(cooker_TYPE_op_status__be___2)) & ((cooker_TYPE_cooker_state__be___0 & ~(cooker_TYPE_cooker_state__be___1)) & ~(cooker_TYPE_cooker_state__be___2))))
+G((OK & (~(cooker_TYPE_cooker_state__be___0) & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))) -> X ((~(cooker_TYPE_cooker_state__be___0) & (~(cooker_TYPE_cooker_state__be___1) & cooker_TYPE_cooker_state__be___2))))
+G((~(OK) & (~(cooker_TYPE_cooker_state__be___0) & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))) -> X ((~(cooker_TYPE_cooker_state__be___0) & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))))
+G(((OK & lid_blocked) & ((~(cooker_TYPE_cooker_state__be___0) & ~(cooker_TYPE_cooker_state__be___1)) & cooker_TYPE_cooker_state__be___2)) -> X ((~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & cooker_TYPE_cooker_state__be___2))))
+G((~((OK & lid_blocked)) & ((~(cooker_TYPE_cooker_state__be___0) & ~(cooker_TYPE_cooker_state__be___1)) & cooker_TYPE_cooker_state__be___2)) -> X ((~(cooker_TYPE_cooker_state__be___0) & (~(cooker_TYPE_cooker_state__be___1) & cooker_TYPE_cooker_state__be___2))))
+G(((~(timer_fired_event) & ~(temp_gt_set_user_temp_b__)) & (~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & ~(cooker_TYPE_cooker_state__be___2)))) -> X ((~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & ~(cooker_TYPE_cooker_state__be___2)))))
+G((timer_fired_event & ((~(cooker_TYPE_cooker_state__be___0) & cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2))) -> X ((cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))))
+G(((temp_gt_set_user_temp_b__ & ~(timer_fired_event)) & ((~(cooker_TYPE_cooker_state__be___0) & cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2))) -> X ((~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & cooker_TYPE_cooker_state__be___2))))
+G(((~(temp_lt_set_user_temp_minus_5_b__) & ~(timer_fired_event)) & (~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & cooker_TYPE_cooker_state__be___2))) -> X ((~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & cooker_TYPE_cooker_state__be___2))))
+G((temp_lt_set_user_temp_minus_5_b__ & (~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & cooker_TYPE_cooker_state__be___2))) -> X (((~(cooker_TYPE_cooker_state__be___0) & cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2))))
+G(((timer_fired_event & ~(temp_lt_set_user_temp_minus_5_b__)) & (~(cooker_TYPE_cooker_state__be___0) & (cooker_TYPE_cooker_state__be___1 & cooker_TYPE_cooker_state__be___2))) -> X ((cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))))
+G((OK & (cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))) -> X (((~(cooker_TYPE_cooker_state__be___0) & ~(cooker_TYPE_cooker_state__be___1)) & ~(cooker_TYPE_cooker_state__be___2))))
+G((~(OK) & (cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))) -> X ((cooker_TYPE_cooker_state__be___0 & (~(cooker_TYPE_cooker_state__be___1) & ~(cooker_TYPE_cooker_state__be___2)))))
+G(temp_gt_set_user_temp_b__ -> ~(temp_lt_set_user_temp_minus_5_b__))
+G(temp_lt_set_user_temp_minus_5_b__ -> ~(temp_gt_set_user_temp_b__))
+G(temp_lt_set_user_temp_minus_5_b__ -> ~(temp_gt_set_user_temp_b__))
+G((set_user_temp_eq_0_b__ & temp_ge_0_b__) -> ~(temp_lt_set_user_temp_minus_5_b__))
+G(temp_gt_set_user_temp_b__ -> ~(temp_lt_set_user_temp_minus_5_b__))

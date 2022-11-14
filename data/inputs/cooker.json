@@ -1,0 +1,628 @@
+{
+  "observables": {
+    "inputs": [
+      {
+        "name": "in_LCD",
+        "type": "int",
+        "min": 0,
+        "max": 4
+      }
+    ],
+    "outputs": [
+      {
+        "name": "out_alertUserWarmup",
+        "type": "bool"
+      },
+      {
+        "name": "out_buzzerAlert",
+        "type": "bool"
+      },
+      {
+        "name": "out_alertUserFinished",
+        "type": "bool"
+      }
+    ],
+    "variables": [
+      {
+        "name": "STATE",
+        "type": "StateEnum",
+        "initial": "STATE_INIT"
+      },
+      {
+        "name": "var_desiredTemp",
+        "type": "int"
+      },
+      {
+        "name": "var_desiredTempPrev",
+        "type": "int"
+      },
+      {
+        "name": "var_desiredTime",
+        "type": "real"
+      },
+      {
+        "name": "var_desiredTimePrev",
+        "type": "real"
+      },
+      {
+        "name": "var_currentTemp",
+        "type": "int"
+      },
+      {
+        "name": "var_currentTime",
+        "type": "real"
+      },
+      {
+        "name": "var_showWarmupTemp",
+        "type": "bool"
+      },
+      {
+        "name": "var_setStartTime",
+        "type": "bool"
+      },
+      {
+        "name": "var_showTimeInterval",
+        "type": "bool"
+      }
+    ],
+    "constants": [
+      {
+        "name": "CYCLE",
+        "type": "int",
+        "value": 10
+      },
+      {
+        "name": "LCD_UP",
+        "type": "int",
+        "value": 0
+      },
+      {
+        "name": "LCD_DOWN",
+        "type": "int",
+        "value": 1
+      },
+      {
+        "name": "LCD_LEFT",
+        "type": "int",
+        "value": 2
+      },
+      {
+        "name": "LCD_RIGHT",
+        "type": "int",
+        "value": 3
+      },
+      {
+        "name": "LCD_SELECT",
+        "type": "int",
+        "value": 4
+      }
+    ],
+    "types": [
+      {
+        "name": "StateEnum",
+        "type": "enum",
+        "members": {
+          "STATE_INIT": 0,
+          "STATE_SET_COOKING_TEMP": 1,
+          "STATE_SET_COOKING_TIME": 2,
+          "STATE_USER_CONFIRMATION": 3,
+          "STATE_START_HEATER": 4,
+          "STATE_WARM_UP": 5,
+          "STATE_ALERT_USER_START": 6,
+          "STATE_COOKING": 7,
+          "STATE_ALERT_USER_END": 8,
+          "STATE_WAIT_FOR_USER": 9,
+          "STATE_TERMINATE": 10
+        }
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "id": 0,
+      "requirement": {
+        "type": "StateMachineDeclaration",
+        "name": "STATE",
+        "states": [
+          "STATE_INIT",
+          "STATE_SET_COOKING_TEMP",
+          "STATE_SET_COOKING_TIME",
+          "STATE_USER_CONFIRMATION",
+          "STATE_START_HEATER",
+          "STATE_WARM_UP",
+          "STATE_ALERT_USER_START",
+          "STATE_COOKING",
+          "STATE_ALERT_USER_END",
+          "STATE_WAIT_FOR_USER",
+          "STATE_TERMINATE"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_INIT"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_INIT",
+          "to": "STATE_SET_COOKING_TEMP",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_SET_COOKING_TEMP && in_LCD == LCD_UP"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_desiredTemp == var_desiredTempPrev + 10",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_SET_COOKING_TEMP && in_LCD == LCD_DOWN"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_desiredTemp == var_desiredTempPrev - 10",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_SET_COOKING_TEMP && in_LCD == LCD_LEFT"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_desiredTemp == var_desiredTempPrev - 1",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_SET_COOKING_TEMP && in_LCD == LCD_RIGHT"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_desiredTemp == var_desiredTempPrev + 1",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "in_LCD == LCD_SELECT"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_SET_COOKING_TEMP",
+          "to": "STATE_SET_COOKING_TIME",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_SET_COOKING_TIME && in_LCD == LCD_UP"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_desiredTime == var_desiredTimePrev + 10.0",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_SET_COOKING_TIME && in_LCD == LCD_DOWN"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_desiredTime == var_desiredTimePrev - 10.0",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_SET_COOKING_TIME && in_LCD == LCD_LEFT"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_desiredTime == var_desiredTimePrev - 1.0",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_SET_COOKING_TIME && in_LCD == LCD_RIGHT"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_desiredTime == var_desiredTimePrev + 1.0",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "in_LCD == LCD_SELECT"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_SET_COOKING_TIME",
+          "to": "STATE_USER_CONFIRMATION",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 12,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "in_LCD == LCD_LEFT"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_USER_CONFIRMATION",
+          "to": "STATE_SET_COOKING_TEMP",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 13,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "in_LCD == LCD_SELECT"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_USER_CONFIRMATION",
+          "to": "STATE_START_HEATER",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_START_HEATER"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_START_HEATER",
+          "to": "STATE_WARM_UP",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_WARM_UP && var_currentTemp < var_desiredTemp"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_showWarmupTemp",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": "16a",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "var_currentTemp >= var_desiredTemp"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_WARM_UP",
+          "to": "STATE_ALERT_USER_START",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": "16b",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_WARM_UP && var_currentTemp >= var_desiredTemp"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "out_alertUserWarmup",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 17,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_ALERT_USER_START"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "out_buzzerAlert",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": "18a",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "in_LCD == LCD_SELECT"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_ALERT_USER_START",
+          "to": "STATE_COOKING",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": "18b",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_ALERT_USER_START && in_LCD == LCD_SELECT"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_setStartTime",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 19,
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "STATE == STATE_COOKING"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "var_showTimeInterval"
+        }
+      }
+    },
+    {
+      "id": "20a",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "var_currentTime >= var_desiredTime"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_COOKING",
+          "to": "STATE_ALERT_USER_END",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": "20b",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_COOKING && var_currentTime >= var_desiredTime"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "out_alertUserFinished",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 21,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_ALERT_USER_END"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "out_buzzerAlert",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 22,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_ALERT_USER_END && in_LCD == LCD_SELECT"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_ALERT_USER_END",
+          "to": "STATE_WAIT_FOR_USER",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    },
+    {
+      "id": 23,
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "STATE == STATE_WAIT_FOR_USER && in_LCD == LCD_SELECT"
+        },
+        "response": {
+          "type": "StateTransition",
+          "state_machine": "STATE",
+          "from_": "STATE_WAIT_FOR_USER",
+          "to": "STATE_TERMINATE",
+          "timing": {
+            "type": "Within",
+            "time": "CYCLE"
+          }
+        }
+      }
+    }
+  ]
+}

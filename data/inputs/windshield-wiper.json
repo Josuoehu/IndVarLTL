@@ -1,0 +1,317 @@
+{
+  "observables": {
+    "inputs": [
+      {
+        "name": "In_wiper",
+        "type": "int",
+        "min": "1",
+        "max": "5"
+      },
+      {
+        "name": "In_Sensor",
+        "type": "int",
+        "min": "0",
+        "max": "1023"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Out_direction",
+        "type": "bool"
+      },
+      {
+        "name": "Out_Motor",
+        "type": "bool"
+      }
+    ],
+    "constants": [
+      {
+        "name": "Auto",
+        "value": "1",
+        "type": "int"
+      },
+      {
+        "name": "Off",
+        "value": "2",
+        "type": "int"
+      },
+      {
+        "name": "Manual_0",
+        "value": "3",
+        "type": "int"
+      },
+      {
+        "name": "Manual_1",
+        "value": "4",
+        "type": "int"
+      },
+      {
+        "name": "Manual_2",
+        "value": "5",
+        "type": "int"
+      }
+    ],
+    "variables": [
+      {
+        "name": "Var_dir",
+        "type": "bool",
+        "initial": "false"
+      },
+      {
+        "name": "Var_vel",
+        "type": "int",
+        "min": "1",
+        "max": "4"
+      }
+    ],
+    "types": []
+  },
+  "requirements": [
+    {
+      "id": "1",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "In_wiper == Off"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Out_Motor"
+        }
+      }
+    },
+    {
+      "id": "2",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "In_wiper == Manual_0"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Out_Motor && Var_vel == 1"
+        }
+      }
+    },
+    {
+      "id": "3",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "In_wiper == Manual_1"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Out_Motor && Var_vel == 2"
+        }
+      }
+    },
+    {
+      "id": "4",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "In_wiper == Manual_2"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Out_Motor && Var_vel == 3"
+        }
+      }
+    },
+    {
+      "id": "5",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "In_wiper == Auto && In_Sensor > 800"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Out_Motor"
+        }
+      }
+    },
+    {
+      "id": "6",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "In_wiper == Auto && In_Sensor <= 800 && In_Sensor > 600"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Out_Motor && Var_vel == 1"
+        }
+      }
+    },
+    {
+      "id": "7",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "In_wiper == Auto && In_Sensor <= 600 && In_Sensor > 460"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Out_Motor && Var_vel == 2"
+        }
+      }
+    },
+    {
+      "id": "8",
+      "requirement": {
+        "type": "StandardRequirement",
+        "scope": {
+          "type": "Holds",
+          "expression": "In_wiper == Auto && In_Sensor < 460"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Out_Motor && Var_vel == 3"
+        }
+      }
+    },
+    {
+      "id": "9",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Var_vel == 1 || Var_vel == 2 || Var_vel == 3"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Var_dir",
+          "timing": {
+            "type": "AtLeast",
+            "time": 500
+          }
+        }
+      }
+    },
+    {
+      "id": "10",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Var_dir",
+          "timing": {
+            "type": "AtLeast",
+            "time": 500
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Var_dir",
+          "timing": {
+            "type": "AtLeast",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": "11",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Var_vel == 1 && !Var_dir",
+          "timing": {
+            "type": "AtLeast",
+            "time": 500
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Out_Motor",
+          "timing": {
+            "type": "AtLeast",
+            "time": 1000
+          }
+        }
+      }
+    },
+    {
+      "id": "12",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Var_vel == 2 && !Var_dir",
+          "timing": {
+            "type": "AtLeast",
+            "time": 500
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Out_Motor",
+          "timing": {
+            "type": "AtLeast",
+            "time": 2000
+          }
+        }
+      }
+    },
+    {
+      "id": "13",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Var_vel == 3 && !Var_dir",
+          "timing": {
+            "type": "AtLeast",
+            "time": 500
+          }
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Out_Motor",
+          "timing": {
+            "type": "AtLeast",
+            "time": "500"
+          }
+        }
+      }
+    },
+    {
+      "id": "14",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "Var_dir"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "Out_direction"
+        }
+      }
+    },
+    {
+      "id": "15",
+      "requirement": {
+        "type": "StandardRequirement",
+        "trigger": {
+          "type": "ExpressionEvent",
+          "expression": "!Var_dir"
+        },
+        "response": {
+          "type": "Satisfy",
+          "expression": "!Out_direction"
+        }
+      }
+    }
+  ]
+}

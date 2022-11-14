@@ -1,0 +1,17 @@
+ENV
+in1,in2,in3,in4,in5,in6,in7
+SYS
+out1,out2,out3,out5,internal1
+
+ASSUMPTIONS
+G(out1 -> X in4)
+G(in6 -> X X (~in3))
+G((in3 & in7) -> X X (~in2))
+G(in7 -> X in1)
+
+GUARANTEES
+G((in1 & in5) -> X (out1 & out2))
+G(in4 -> X out1)
+G(internal1 -> X (out5))
+G(internal1 -> X (~out3))
+G(in2 -> X internal1)

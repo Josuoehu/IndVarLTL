@@ -1,0 +1,33 @@
+MODULE main 
+ 
+IVAR 
+ 
+right_hand_on : boolean;
+left_hand_on : boolean;
+
+VAR 
+ 
+at_speed_2 : 0..3600;
+
+speed: {v0, v1, v2};
+
+ASSIGN
+	init(at_speed_2) := 0;
+	next(at_speed_2) :=
+		case
+			(right_hand_on&(left_hand_on&(speed=v1))): 1;
+			(right_hand_on&(left_hand_on&((speed=v2)&(at_speed_2<3600)))): (at_speed_2+1);
+			(!(right_hand_on)|(!(left_hand_on)|(at_speed_2=3600))): 0;
+			TRUE : at_speed_2;
+		esac;
+
+	init(speed) := v0;
+	next(speed) :=
+		case
+			((speed=v0)&(right_hand_on&left_hand_on)): v1;
+			(right_hand_on&(left_hand_on&(speed=v1))): v2;
+			(right_hand_on&(left_hand_on&((speed=v2)&(at_speed_2<3600)))): v2;
+			(!(right_hand_on)|(!(left_hand_on)|(at_speed_2=3600))): v0;
+			TRUE : speed;
+		esac;
+
