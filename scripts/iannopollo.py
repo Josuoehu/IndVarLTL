@@ -160,38 +160,6 @@ def look_for_dependent_variables_aalta(cs, fi, chang_vars, env_vars, treated, sy
             return cs
 
 
-def look_for_dependent_variables_aalta_v2(cs, fi, chang_vars, env_vars, treated, sys_vars, ass, gua, init_env,
-                                          init_sys):
-    cz = not_in_v(cs, chang_vars)
-    z = cz[0]
-
-    inv = " | F(" + z + " <-> !" + z + "_)"
-    nfi = fi + inv
-    nnfi = '!(' + nfi + ')'
-    aalta_res, model = call_full_aalta('expression.dimacs', nnfi, env_vars, cs, treated)
-    if aalta_res == 'sat' and model:
-        changing_vars = model
-        return look_for_dependent_variables_aalta(cs, nfi, changing_vars, env_vars, treated, sys_vars, ass, gua,
-                                                  init_env, init_sys)
-    else:
-        cs.append(z)
-        treated.append(z)
-        ncs = not_in_v(cs, sys_vars)
-        if ncs:
-            fffi = refine_formula(ass, gua, init_env, init_sys, cs, ncs, True)
-            nfffi = '!(' + fffi + ')'
-            aalta_res, model = call_full_aalta('expression.dimacs', nfffi, env_vars, cs, treated)
-            if aalta_res == 'sat' and model:
-                changing_vars = model
-                return look_for_dependent_variables_aalta(cs, fffi, changing_vars, env_vars, treated, sys_vars, ass,
-                                                          gua,
-                                                          init_env, init_sys)
-            else:
-                return cs
-        else:
-            return cs
-
-
 def manage_counterexample_nusmv(var, cv, treated):
     counterex = parse_xml("../data/counterexample.xml")
     os.remove("../data/counterexample.xml")
