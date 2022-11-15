@@ -26,13 +26,13 @@ def look_for_dep_var(fi, changing_vars, cs, treated, cv):
             cs.append(z)
             treated.append(z)
             ncs = not_in_v(cs, cv)
-            other_fi = generate_exp(fi, cs, ncs)
-            call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
-            if os.path.exists("../data/counterexample.xml"):
-                changing_vars = ob_vars(cs, treated)
-                return look_for_dep_var(fi, changing_vars, cs, treated, cv)
-            else:
-                return cs
+            if ncs:
+                other_fi = generate_exp(fi, cs, ncs)
+                call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
+                if os.path.exists("../data/counterexample.xml"):
+                    changing_vars = ob_vars(cs, treated)
+                    return look_for_dep_var(fi, changing_vars, cs, treated, cv)
+            return cs
     return cs
 
 
@@ -70,7 +70,7 @@ def main():
     ex1v = ["a", "b", "c", "d"]
     ex2 = "(a | (b & c))"
     ex2v = ["a", "b", "c"]
-    ex3 = ["((a | b) & ( c | d))"]
+    ex3 = "((a | b) & ( c | d))"
     create_nusmv_file([], ex1v)
     result = partition(ex3, ex1v)
     os.remove("../smv/nuxmv_file.smv")
