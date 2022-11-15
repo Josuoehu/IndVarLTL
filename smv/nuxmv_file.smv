@@ -1,0 +1,92 @@
+MODULE main 
+ 
+VAR 
+ 
+a: boolean;
+a_: boolean;
+b: boolean;
+b_: boolean;
+c: boolean;
+c_: boolean;
+d: boolean;
+d_: boolean;
+
+FAIRNESS TRUEMODULE main 
+ 
+VAR 
+ 
+a: boolean;
+a_: boolean;
+b: boolean;
+b_: boolean;
+c: boolean;
+c_: boolean;
+d: boolean;
+d_: boolean;
+
+FAIRNESS TRUEMODULE main 
+ 
+VAR 
+ 
+a: boolean;
+a_: boolean;
+b: boolean;
+b_: boolean;
+c: boolean;
+c_: boolean;
+d: boolean;
+d_: boolean;
+
+FAIRNESS TRUEMODULE main 
+ 
+VAR 
+ 
+a: boolean;
+a_: boolean;
+b: boolean;
+b_: boolean;
+c: boolean;
+c_: boolean;
+d: boolean;
+d_: boolean;
+
+FAIRNESS TRUEMODULE main 
+ 
+VAR 
+ 
+a: boolean;
+a_: boolean;
+b: boolean;
+b_: boolean;
+c: boolean;
+c_: boolean;
+d: boolean;
+d_: boolean;
+
+FAIRNESS TRUEMODULE main 
+ 
+VAR 
+ 
+a: boolean;
+a_: boolean;
+b: boolean;
+b_: boolean;
+c: boolean;
+c_: boolean;
+d: boolean;
+d_: boolean;
+
+FAIRNESS TRUEMODULE main 
+ 
+VAR 
+ 
+a: boolean;
+a_: boolean;
+b: boolean;
+b_: boolean;
+c: boolean;
+c_: boolean;
+d: boolean;
+d_: boolean;
+
+FAIRNESS TRUE
