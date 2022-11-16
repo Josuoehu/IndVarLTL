@@ -1,6 +1,18 @@
 import os, stat
 
 
+def call_get_path(is_linux, is_nusmv):
+    if is_nusmv:
+        if not is_linux:
+            calling = './get_path.sh /Users NuSMV'
+        else:
+            calling = './get_path.sh /home NuSMV'
+    else:
+        # Falta implementar
+        calling = ''
+    os.system(calling)
+
+
 def call_nusmv_bounded(script, expression, out_name, bound):
     command = '\'go_bmc;check_ltlspec_bmc -p \"' + expression + '\" -k ' + str(bound) + '; show_traces -p 4 -o ../data/' + out_name\
               + '.xml;quit\''

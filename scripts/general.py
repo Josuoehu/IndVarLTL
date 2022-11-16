@@ -1,7 +1,9 @@
 import os
 import argparse
+import stat
+import time
 
-from call import call_nusmv
+from call import call_nusmv, call_get_path
 from generate_nuxmv import create_nusmv_file
 from iannopollo import not_in_v, renaming
 from readXML import parse_xml, not_same_var
@@ -113,6 +115,7 @@ def terminal_use():
                     formula += str(l)
                 else:
                     formula += str(line)
+            file.close()
             return formula
 
 
@@ -130,7 +133,41 @@ def get_formula():
         return t
 
 
-def main():
+def create_bash_file(path):
+    f = open("call_nusmv.sh", "a")
+    f.write("#!/bin/bash\n\n" + str(path) + " -int ../smv/$2 <<< $1")
+    f.close()
+    os.chmod("./call_nusmv.sh", stat.S_IRWXU)
+
+
+def get_app_path():
+    call_get_path(is_linux=False, is_nusmv=True)
+    f = open("../files/allpaths.txt")
+    line = f.readline()
+    if line[-1] == '\n':
+        line = line[:-1]
+    return line
+
+
+def checker_path():
+    path = get_app_path()
+    create_bash_file(path)
+
+
+def pregunta_path():
+    print("Do you want the app to look for NuSMV in your computer?\nType 1 if you want, 2 instead.")
+    res = input()
+    if res == '1':
+        print("Looking for the path...\n")
+        checker_path()
+    else:
+        print("Until the next one!")
+        quit()
+
+
+def full_process():
+    print("Asking the question...")
+    time.sleep(3)
     formula = get_formula()
     print(formula)
     var_tree = parse_req_exp(formula, 'prop')
@@ -138,8 +175,22 @@ def main():
     create_nusmv_file([], variables)
     result = partition(formula, variables)
     os.remove("../smv/nuxmv_file.smv")
+    os.remove("../files/allpaths.txt")
+    return result
+
+
+def main():
+    pregunta_path()
+    result = full_process()
+    os.remove("./call_nusmv.sh")
     # print(str(result))
     print("\nThe result of the decomposition is:\n" + str(result))
+
+
+def prueba():
+    print(os.path.abspath('NuSMV'))
+
+
 if __name__ == '__main__':
     # start_time = time.time()
     main()
