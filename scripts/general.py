@@ -139,7 +139,7 @@ def main():
     result = partition(formula, variables)
     os.remove("../smv/nuxmv_file.smv")
     # print(str(result))
-    print(result)
+    print("\nThe result of the decomposition is:\n" + str(result))
 if __name__ == '__main__':
     # start_time = time.time()
     main()
