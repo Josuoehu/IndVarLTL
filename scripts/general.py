@@ -1,4 +1,5 @@
 import os
+import argparse
 
 from call import call_nusmv
 from generate_nuxmv import create_nusmv_file
@@ -60,7 +61,7 @@ def partition(fi, cv):
                     cs = look_for_dep_var(fi, newfi, changing_vars, cs, treated, cv)
                 cv = not_in_v(cs, cv)
             conjuntos.append(cs)
-            print("New group " + str(cs))
+            # print("New group " + str(cs))
     return conjuntos
 
 
@@ -71,7 +72,7 @@ def __var_list_from_tree(exp):
         if len(exp) == 2:
             return __var_list_from_tree(exp[1])
         elif len(exp) == 3:
-                return __var_list_from_tree(exp[1]) + __var_list_from_tree(exp[2])
+            return __var_list_from_tree(exp[1]) + __var_list_from_tree(exp[2])
         else:
             return [exp[0]]
     else:
@@ -91,21 +92,47 @@ def ob_vars(cs, treated):
     l4 = not_in_v(treated, l3)
     return l4
 
-def main():
-    ex1 = "(a | ((b & c) & ((a | d) & (!b & !c))))"
-    ex1v = ["a", "b", "c", "d"]
-    ex1paperv = ["a", "b", "c", "d", "e"]
-    ex2 = "(a | (b & c))"
-    ex2v = ["a", "b", "c"]
-    ex3 = "((a | b) & ( c | d))"
-    ex1paper = "((a | (b & c)) & (d | !e) & !e)"
-    ex2paper = "((a -> (b & c)) & (!a -> (!b & !c)))"
-    # create_nusmv_file([], ex1paperv)
-    # result = partition(ex1paper, ex1paperv)
-    # os.remove("../smv/nuxmv_file.smv")
 
+def terminal_use():
+    parser = argparse.ArgumentParser(description="Descomposition tool")
+    parser.add_argument("-f", dest="filename", help="Input the file with the logical expression", 
+                        metavar="FILE")
+    args = parser.parse_args()
+    if not args.filename:
+        return ""
+    else:
+        if not os.path.exists(args.filename):
+            raise Exception
+        else:
+            formula = ""
+            file = open(args.filename, "r")
+            lines = file.readlines()
+            for line in lines:
+                if line[-1] == '\n':
+                    l = line[:-1]
+                    formula += str(l)
+                else:
+                    formula += str(line)
+            return formula
+
+
+def no_file_terminal():
     print("Introduce the formula:")
     formula = input()
+    return formula
+
+
+def get_formula():
+    t = terminal_use()
+    if not t:
+        return no_file_terminal()
+    else:
+        return t
+
+
+def main():
+    formula = get_formula()
+    print(formula)
     var_tree = parse_req_exp(formula, 'prop')
     variables = var_list_exp(var_tree)
     create_nusmv_file([], variables)
