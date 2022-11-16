@@ -1,4 +1,4 @@
-from scripts.classes import BVarI
+from classes import BVarI
 
 
 def parse_aalta(file_text):

@@ -2,10 +2,10 @@ import os
 import re
 
 from itertools import combinations
-from scripts.call import call_nusmv, call_nusmv_bounded, call_aalta
-from scripts.generate import req_to_string_2
-from scripts.readXML import parse_xml, not_same_var
-from scripts.read_aalta_result import parse_aalta
+from call import call_nusmv, call_nusmv_bounded, call_aalta
+from generate import req_to_string_2
+from readXML import parse_xml, not_same_var
+from read_aalta_result import parse_aalta
 
 
 def alg_iannopollo(env_vars, sys_vars, init_env, init_sys, ass, gua):

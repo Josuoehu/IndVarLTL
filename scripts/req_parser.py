@@ -3,23 +3,16 @@ from classes import IniVisitor
 from generate import req_to_string
 
 # Grammar to parse de requirements
-grammar_new = Grammar(
+grammar_prop = Grammar(
             """
-            Toprule = (Next Regla) / Regla
-            Regla = (OrExpr "->" OrExpr) / OrExpr
-            OrExpr = (AndExpr Or OrExpr) / AndExpr
-            AndExpr = (Literal And AndExpr) / Literal
+            Bicondicional = (Condicional "<->" Bicondicional) / Condicional
+            Condicional = (Conjuncion "->" Condicional) / Conjuncion
+            Conjuncion = (Disyuncion Or Conjuncion) / Disyuncion
+            Disyuncion = (Literal And Disyuncion) / Literal
             Literal = Atomo / ("!" Literal)
-            Atomo = IntBool / Id / Agrupacion
-            Agrupacion = "(" OrExpr ")"
-            IntBool = (Id Op IntExpr) / Id 
-            IntExpr = ((Integer / Real / Id) Arit IntExpr) / (Real / Integer / Id)
-            Op        = ">=" / ">" / "<=" / "<" / "==" / "=" / "!="
-            Arit        = "+" / "-" / "*" / "/" / "mod"
-            Integer     = ~"[-+]?[0-9]+"
-            Next        = "X"
+            Atomo = Id / Agrupacion
+            Agrupacion = "(" Bicondicional ")"
             Id          = ~"[A-Za-z0-9_]+"
-            Real        = ~"((\+|-)?([0-9]+)\.([0-9]+)?)|((\+|-)?\.[0-9]+)"
             Not         = "!" / "~"
             And         = "&&" / "&"
             Or          = "||" / "|"
@@ -29,10 +22,13 @@ grammar_new = Grammar(
 # "[A-Za-z0-9_-]+"
 
 
-def parse_req_exp(exp):
-    iv = IniVisitor()
-    tree = grammar_new.parse(exp.replace(" ", ""))
-    return iv.visit(tree)
+def parse_req_exp(exp, gramatica):
+    if gramatica == 'prop':
+        iv = IniVisitor()
+        tree = grammar_prop.parse(exp.replace(" ", ""))
+        return iv.visit(tree)
+    else:
+        return None
 
 
 def is_in_tree(tree, statement):
@@ -96,7 +92,7 @@ def insert_in_tree(tree, statement):
 
 
 def main():
-    str = 'a && !c'
+    str = '((a -> (b & c)) & (!a -> (!b & !c)))'
     print(parse_req_exp(str))
 
 if __name__ == '__main__':
