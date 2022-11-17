@@ -70,22 +70,20 @@ def partition(fi, cv):
 def partition_recursive(fi, cv, treated):
     if not cv:
         return []
+    if len(cv) == 1:
+        return [cv]
     else:
         v = cv[0]
         cs = [v]
         treated.append(v)
         ncs = not_in_v(cs, cv)
-        if ncs:
-            newfi = generate_exp(fi, cs, ncs)
-            call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-            if os.path.exists("../data/counterexample.xml"):
-                changing_vars = ob_vars(cs, treated)
-                cs = look_for_dep_var(fi, newfi, changing_vars, cs, treated, cv)
-            cv = not_in_v(cs, cv)
-            if len(cv) == 1:
-                return [cs] + [cv]
-            else:
-                return [cs] + partition_recursive(fi, cv, treated)
+        newfi = generate_exp(fi, cs, ncs)
+        call_nusmv("nuxmv_file.smv", newfi, "counterexample")
+        if os.path.exists("../data/counterexample.xml"):
+            changing_vars = ob_vars(cs, treated)
+            cs = look_for_dep_var(fi, newfi, changing_vars, cs, treated, cv)
+        cv = not_in_v(cs, cv)
+        return [cs] + partition_recursive(fi, cv, treated)
 
 
 def __var_list_from_tree(exp):
