@@ -1,1 +1,1 @@
-# TFM_Josu_Oca
+# Decomposition tool por propositional logic
