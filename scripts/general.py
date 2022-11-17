@@ -67,6 +67,27 @@ def partition(fi, cv):
     return conjuntos
 
 
+def partition_recursive(fi, cv, treated):
+    if not cv:
+        return []
+    else:
+        v = cv[0]
+        cs = [v]
+        treated.append(v)
+        ncs = not_in_v(cs, cv)
+        if ncs:
+            newfi = generate_exp(fi, cs, ncs)
+            call_nusmv("nuxmv_file.smv", newfi, "counterexample")
+            if os.path.exists("../data/counterexample.xml"):
+                changing_vars = ob_vars(cs, treated)
+                cs = look_for_dep_var(fi, newfi, changing_vars, cs, treated, cv)
+            cv = not_in_v(cs, cv)
+            if len(cv) == 1:
+                return [cs] + [cv]
+            else:
+                return [cs] + partition_recursive(fi, cv, treated)
+
+
 def __var_list_from_tree(exp):
     # From a binary tree of a requirement returns it on a string
 
@@ -140,49 +161,63 @@ def create_bash_file(path):
     os.chmod("./call_nusmv.sh", stat.S_IRWXU)
 
 
-def get_app_path():
-    call_get_path(is_linux=False, is_nusmv=True)
+def get_app_path(is_linux):
+    call_get_path(is_linux, is_nusmv=True)
     f = open("../files/allpaths.txt")
     line = f.readline()
     if line[-1] == '\n':
         line = line[:-1]
+    os.remove("../files/allpaths.txt")
     return line
 
 
-def checker_path():
-    path = get_app_path()
+def checker_path(is_linux):
+    path = get_app_path(is_linux)
     create_bash_file(path)
 
 
 def pregunta_path():
+    is_linux = False
     print("Do you want the app to look for NuSMV in your computer?\nType 1 if you want, 2 instead.")
     res = input()
     if res == '1':
+        print("Are you using this app on a linux or a mac?\nType 1 if linux, 2 if mac, any other thing if other.")
+        res1 = input()
+        if res1 == '1':
+            is_linux = True
+        elif res1 == '2':
+            is_linux = False
+        else:
+            print("Until the next one!")
+            quit()
         print("Looking for the path...\n")
-        checker_path()
+        checker_path(is_linux)
     else:
         print("Until the next one!")
         quit()
 
 
 def full_process():
+    formula = get_formula()
+    # print(formula)
     print("Asking the question...")
     time.sleep(3)
-    formula = get_formula()
-    print(formula)
     var_tree = parse_req_exp(formula, 'prop')
     variables = var_list_exp(var_tree)
     create_nusmv_file([], variables)
-    result = partition(formula, variables)
+    # result = partition(formula, variables)
+    result = partition_recursive(formula, variables, [])
     os.remove("../smv/nuxmv_file.smv")
-    os.remove("../files/allpaths.txt")
     return result
 
 
 def main():
-    pregunta_path()
+    print("Is the first time you use this version of the app in this computer?\nType 1 if so, anything else if not.")
+    res = input()
+    if res == '1':
+        pregunta_path()
     result = full_process()
-    os.remove("./call_nusmv.sh")
+    # os.remove("./call_nusmv.sh")
     # print(str(result))
     print("\nThe result of the decomposition is:\n" + str(result))
 
