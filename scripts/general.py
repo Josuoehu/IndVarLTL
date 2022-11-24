@@ -139,7 +139,7 @@ def terminal_use():
 
 
 def no_file_terminal():
-    print("Introduce the formula:")
+    print("\nIntroduce the formula:")
     formula = input()
     return formula
 
@@ -191,12 +191,15 @@ def pregunta_path():
         print("Looking for the path...\n")
         checker_path(is_linux)
     else:
-        print("Until the next one!")
+        print("\nUntil the next one!")
         quit()
 
 
-def full_process():
-    formula = get_formula()
+def full_process(first):
+    if first:
+        formula = get_formula()
+    else:
+        formula = no_file_terminal()
     # print(formula)
     print("Asking the question...")
     time.sleep(3)
@@ -209,16 +212,27 @@ def full_process():
     return result
 
 
+def main_in(first, program_name):
+    result = full_process(first)
+    # os.remove("./call_nusmv.sh")
+    # print(str(result))
+    print("\nThe result of the decomposition is:\n" + str(result))
+    time.sleep(1)
+    print("\nWill you continue using " + program_name + "?\nType 1 if so, anything else if not.")
+    res1 = input()
+    if res1 == '1':
+        main_in(False, program_name)
+    else:
+        print("\nSee you next time!")
+
+
 def main():
+    program_name = "Decomposition"
     print("Is the first time you use this version of the app in this computer?\nType 1 if so, anything else if not.")
     res = input()
     if res == '1':
         pregunta_path()
-    result = full_process()
-    # os.remove("./call_nusmv.sh")
-    # print(str(result))
-    print("\nThe result of the decomposition is:\n" + str(result))
-
+    main_in(True, program_name)
 
 def prueba():
     print(os.path.abspath('NuSMV'))
