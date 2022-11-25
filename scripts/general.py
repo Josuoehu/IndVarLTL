@@ -160,7 +160,7 @@ def create_bash_file(path):
 
 
 def get_app_path(is_linux):
-    call_get_path(is_linux, is_nusmv=True)
+    call_get_path(is_linux, True)
     f = open("../files/allpaths.txt")
     line = f.readline()
     if line[-1] == '\n':
