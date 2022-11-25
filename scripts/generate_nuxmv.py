@@ -5,8 +5,6 @@ from req_parser import is_var_in_tree
 from generate import req_to_string
 from overlapping import check_overlapping
 
-FILE = read_file('/running_example.json')
-
 
 def create_document(name, first):
     # Creates a document in order to write on it
