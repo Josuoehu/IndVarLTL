@@ -70,11 +70,12 @@ def partition(fi, cv):
 def partition_recursive(fi, cv, treated):
     if not cv:
         return []
-    elif len(cv) == 1:
-        return [cv]
+    # elif len(cv) == 1:
+    #     return [cv]
     else:
         v = cv[0]
         cs = [v]
+        create_nusmv_file(treated, cv)
         treated.append(v)
         ncs = not_in_v(cs, cv)
         newfi = generate_exp(fi, cs, ncs)
@@ -83,6 +84,7 @@ def partition_recursive(fi, cv, treated):
             changing_vars = ob_vars(cs, treated)
             cs = look_for_dep_var(fi, newfi, changing_vars, cs, treated, cv)
         cv = not_in_v(cs, cv)
+        os.remove("../smv/nuxmv_file.smv")
         return [cs] + partition_recursive(fi, cv, treated)
 
 
@@ -153,7 +155,7 @@ def get_formula():
 
 
 def create_bash_file(path):
-    f = open("call_nusmv.sh", "a")
+    f = open("call_nusmv.sh", "w")
     f.write("#!/bin/bash\n\n" + str(path) + " -int ../smv/$2 <<< $1")
     f.close()
     os.chmod("./call_nusmv.sh", stat.S_IRWXU)
@@ -205,10 +207,10 @@ def full_process(first):
     time.sleep(3)
     var_tree = parse_req_exp(formula, 'prop')
     variables = var_list_exp(var_tree)
-    create_nusmv_file([], variables)
+    # create_nusmv_file([], variables)
     # result = partition(formula, variables)
     result = partition_recursive(formula, variables, [])
-    os.remove("../smv/nuxmv_file.smv")
+    # os.remove("../smv/nuxmv_file.smv")
     return result
 
 
