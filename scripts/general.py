@@ -70,7 +70,7 @@ def partition(fi, cv):
 def partition_recursive(fi, cv, treated):
     if not cv:
         return []
-    if len(cv) == 1:
+    elif len(cv) == 1:
         return [cv]
     else:
         v = cv[0]
