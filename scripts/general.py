@@ -110,10 +110,11 @@ def var_list_exp(exp):
 def ob_vars(cs, treated):
     counterex = parse_xml("../data/counterexample.xml")
     os.remove("../data/counterexample.xml")
+    # No se si aquí es necesario list(set())
     dvars = list(set(not_same_var(counterex)))
     l3 = not_in_v(cs, dvars)
-    l4 = not_in_v(treated, l3)
-    return l4
+    # l4 = not_in_v(treated, l3)
+    return l3
 
 
 def terminal_use():
