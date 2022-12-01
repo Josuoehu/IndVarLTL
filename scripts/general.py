@@ -2,6 +2,7 @@ import os
 import argparse
 import stat
 import time
+from operator import is_
 
 from call import call_nusmv, call_get_path
 from generate_nuxmv import create_nusmv_file
@@ -45,6 +46,33 @@ def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
         else:
             return cs
 
+def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model):
+    # cz = not_in_v(cs, changing_vars)
+    newfi = oldfi
+    while is_model:
+        z = changing_vars[0]
+        inv = " | !(" + z + " <-> " + z + "_)"
+        newfi += inv
+        call_nusmv("nuxmv_file.smv", newfi, "counterexample")
+        if os.path.exists("../data/counterexample.xml"):
+            new_changing_vars = ob_vars(cs, treated)
+            changing_vars = new_changing_vars
+        else:
+            is_model = False
+    cs.append(z)
+    treated.append(z)
+    ncs = not_in_v(cs, cv)
+    if ncs:
+        other_fi = generate_exp(fi, cs, ncs)
+        call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
+        if os.path.exists("../data/counterexample.xml"):
+            changing_vars = ob_vars(cs, treated)
+            return look_for_dep_var_while(fi, other_fi, changing_vars, cs, treated, cv, True)
+        else:
+            return cs
+    else:
+        return cs
+
 
 def partition(fi, cv):
     conjuntos =[]
@@ -82,7 +110,7 @@ def partition_recursive(fi, cv, treated):
         call_nusmv("nuxmv_file.smv", newfi, "counterexample")
         if os.path.exists("../data/counterexample.xml"):
             changing_vars = ob_vars(cs, treated)
-            cs = look_for_dep_var(fi, newfi, changing_vars, cs, treated, cv)
+            cs = look_for_dep_var_while(fi, newfi, changing_vars, cs, treated, cv, True)
         cv = not_in_v(cs, cv)
         os.remove("../smv/nuxmv_file.smv")
         return [cs] + partition_recursive(fi, cv, treated)
