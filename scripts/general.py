@@ -46,6 +46,7 @@ def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
         else:
             return cs
 
+
 def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model):
     # cz = not_in_v(cs, changing_vars)
     newfi = oldfi
@@ -59,8 +60,9 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model):
             changing_vars = new_changing_vars
         else:
             is_model = False
-    cs.append(z)
-    treated.append(z)
+            # He cambiado esto dentro del else por la variable z
+            cs.append(z)
+            treated.append(z)
     ncs = not_in_v(cs, cv)
     if ncs:
         other_fi = generate_exp(fi, cs, ncs)
@@ -146,6 +148,7 @@ def ob_vars(cs, treated):
 
 
 def terminal_use():
+    # Read the arguments from the terminal
     parser = argparse.ArgumentParser(description="Descomposition tool")
     parser.add_argument("-f", dest="filename", help="Input the file with the logical expression", 
                         metavar="FILE")
@@ -170,12 +173,13 @@ def terminal_use():
 
 
 def no_file_terminal():
+    # When there is no file in the arguments
     print("\nIntroduce the formula:")
     formula = input()
     return formula
 
 
-def get_formula():
+def __get_formula():
     t = terminal_use()
     if not t:
         return no_file_terminal()
@@ -184,6 +188,7 @@ def get_formula():
 
 
 def create_bash_file(path):
+    # Create the NuSMV bash file to call it given the path
     f = open("call_nusmv.sh", "w")
     f.write("#!/bin/bash\n\n" + str(path) + " -int ../smv/$2 <<< $1")
     f.close()
@@ -191,6 +196,7 @@ def create_bash_file(path):
 
 
 def get_app_path(is_linux):
+    # Given if the system is Linux or not (MacOS) gets the path of NuSMV in the computer
     call_get_path(is_linux, True)
     f = open("../files/allpaths.txt")
     line = f.readline()
@@ -201,11 +207,13 @@ def get_app_path(is_linux):
 
 
 def checker_path(is_linux):
+    # Gets the path and creates the bash file for NuSMV
     path = get_app_path(is_linux)
     create_bash_file(path)
 
 
 def pregunta_path():
+    # Questions to start the app
     is_linux = False
     print("Do you want the app to look for NuSMV in your computer?\nType 1 if you want, 2 instead.")
     res = input()
@@ -227,8 +235,9 @@ def pregunta_path():
 
 
 def full_process(first):
+    # Gets the formula and calls the main method partition_recursive
     if first:
-        formula = get_formula()
+        formula = __get_formula()
     else:
         formula = no_file_terminal()
     # print(formula)
