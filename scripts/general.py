@@ -241,7 +241,7 @@ def full_process(first):
     else:
         formula = no_file_terminal()
     # print(formula)
-    print("Asking the question...")
+    print("\nAsking the question...")
     time.sleep(3)
     var_tree = parse_req_exp(formula, 'prop')
     variables = var_list_exp(var_tree)
