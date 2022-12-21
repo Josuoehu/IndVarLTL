@@ -234,6 +234,26 @@ def pregunta_path():
         quit()
 
 
+def get_the_partition(var_tree, variables, var_groups):
+    # Save the expression tree when created
+    # Ask NuSMV for a model of the original formula
+    # Save the value of the variables
+    # While there are groups of the variables left
+    #   Give the value to the rest of the variables and treat the tree
+    #   Save the result of the final expression
+    create_nusmv_file(variables, [])
+    if os.path.exists("../data/counterexample.xml"):
+        counterex = parse_xml("../data/counterexample.xml")
+        os.remove("../data/counterexample.xml")
+        # Accedo al primer elemento de la lista compuesta por nodos, y luego a las variables normales
+        model = counterex[0][0]
+    else:
+        quit('It does not exist a model for the formula.')
+    os.remove("../smv/nuxmv_file.smv")
+    
+
+
+
 def full_process(first):
     # Gets the formula and calls the main method partition_recursive
     if first:
@@ -247,15 +267,13 @@ def full_process(first):
     variables = var_list_exp(var_tree)
     # create_nusmv_file([], variables)
     # result = partition(formula, variables)
-    result = partition_recursive(formula, variables, [])
-    # os.remove("../smv/nuxmv_file.smv")
-    return result
+    var_groups = partition_recursive(formula, variables, [])
+    get_the_partition(var_tree, variables, var_groups)
+    return var_groups
 
 
 def main_in(first, program_name):
     result = full_process(first)
-    # os.remove("./call_nusmv.sh")
-    # print(str(result))
     print("\nThe result of the decomposition is:\n" + str(result))
     time.sleep(1)
     print("\nWill you continue using " + program_name + "?\nType 1 if so, anything else if not.")
