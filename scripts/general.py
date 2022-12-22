@@ -9,6 +9,8 @@ from generate_nuxmv import create_nusmv_file
 from iannopollo import not_in_v, renaming
 from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
+from scripts.classes import BVarI
+
 
 # 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
 def generate_exp(fi, cs, ncs):
@@ -234,7 +236,7 @@ def pregunta_path():
         quit()
 
 
-def get_the_partition(var_tree, variables, var_groups):
+def get_the_partition(formula, var_tree, variables, var_groups):
     # Save the expression tree when created
     # Ask NuSMV for a model of the original formula
     # Save the value of the variables
@@ -242,6 +244,7 @@ def get_the_partition(var_tree, variables, var_groups):
     #   Give the value to the rest of the variables and treat the tree
     #   Save the result of the final expression
     create_nusmv_file(variables, [])
+    call_nusmv("nuxmv_file.smv", '!(' + formula + ')', "counterexample")
     if os.path.exists("../data/counterexample.xml"):
         counterex = parse_xml("../data/counterexample.xml")
         os.remove("../data/counterexample.xml")
@@ -250,8 +253,137 @@ def get_the_partition(var_tree, variables, var_groups):
     else:
         quit('It does not exist a model for the formula.')
     os.remove("../smv/nuxmv_file.smv")
-    
+    f = []
+    i = 0
+    for i in range(len(var_groups)):
+        if i == 0:
+            selected_vars = flatt_list(var_groups[i:])
+        elif i == len(var_groups)-1:
+            selected_vars = flatt_list(var_groups[:len(var_groups)-1])
+        else:
+            selected_vars = flatt_list(var_groups[:i] + var_groups[i+1:])
+        f_i = get_new_formula(var_tree, model, selected_vars)
+        f.append(f_i)
+        i += 1
+    return f
 
+
+def flatt_list(l):
+    return [item for sublist in l for item in sublist]
+
+
+def get_new_formula(tree, model, sel_vars):
+    # Given a tree of the formula and a model that satisfies it, returns
+    t = __change_values_tree(tree, model, sel_vars)
+    nt = __simplify_tree(t)
+    return nt
+
+
+def __change_values_tree(tree, model, sel_vars):
+    if not (type(tree) == str):
+        if len(tree) == 2:
+            return [tree[0], __change_values_tree(tree[1], model, sel_vars)]
+        elif len(tree) == 3:
+            return [tree[0], __change_values_tree(tree[1], model, sel_vars), __change_values_tree(tree[2], model, sel_vars)]
+        else:
+            # No se en que caso se da esto pero por si acaso
+            return [__change_values_tree(tree[0], model, sel_vars)]
+    else:
+        if tree in sel_vars:
+            return __get_var_value(tree, model)
+        else:
+            return tree
+
+
+def __simplify_tree(tree):
+    if type(tree) != str:
+        if len(tree) == 2:
+            if tree[1] == 'True':
+                return 'False'
+            elif tree[1] == 'False':
+                return 'True'
+            else:
+                return tree[0] + ' ' + __simplify_tree(tree[1])
+        elif len(tree) == 3:
+            if tree[1] == 'True':
+                if tree[0] == '&':
+                    return __simplify_tree(tree[2])
+                elif tree[0] == '|':
+                    return 'True'
+                else:
+                    # ->
+                    return __simplify_tree(tree[2])
+            elif tree[1] == 'False':
+                if tree[0] == '&':
+                    return 'False'
+                elif tree[0] == '|':
+                    return __simplify_tree(tree[2])
+                else:
+                    # ->
+                    return 'True'
+            elif tree[2] == 'True':
+                if tree[0] == '&':
+                    return __simplify_tree(tree[1])
+                elif tree[0] == '|':
+                    return 'True'
+                else:
+                    # ->
+                    return True
+            elif tree[2] == 'False':
+                if tree[0] == '&':
+                    return 'False'
+                elif tree[0] == '|':
+                    return __simplify_tree(tree[1])
+                else:
+                    # ->
+                    return __simplify_tree(['!', tree[1]])
+            else:
+                izq = __simplify_tree(tree[1])
+                der = __simplify_tree(tree[2])
+                if izq == 'True':
+                    if tree[0] == '&':
+                        return der
+                    elif tree[0] == '|':
+                        return 'True'
+                    else:
+                        # ->
+                        return der
+                elif izq == 'False':
+                    if tree[0] == '&':
+                        return 'False'
+                    elif tree[0] == '|':
+                        return der
+                    else:
+                        # ->
+                        return 'True'
+                elif der == 'True':
+                    if tree[0] == '&':
+                        return izq
+                    elif tree[0] == '|':
+                        return 'True'
+                    else:
+                        # ->
+                        return 'True'
+                elif der == 'False':
+                    if tree[0] == '&':
+                        return 'False'
+                    elif tree[0] == '|':
+                        return izq
+                    else:
+                        # ->
+                        return '!' + izq
+                else:
+                    return izq + ' ' + tree[0] + ' ' + der
+        else:
+            return tree[0]
+    else:
+        return tree
+
+
+def __get_var_value(v, model):
+    for m in model:
+        if v == m.get_name():
+            return str(m.get_value())
 
 
 def full_process(first):
@@ -268,13 +400,14 @@ def full_process(first):
     # create_nusmv_file([], variables)
     # result = partition(formula, variables)
     var_groups = partition_recursive(formula, variables, [])
-    get_the_partition(var_tree, variables, var_groups)
-    return var_groups
+    form_groups = get_the_partition(formula, var_tree, variables, var_groups)
+    return var_groups, form_groups
 
 
 def main_in(first, program_name):
     result = full_process(first)
-    print("\nThe result of the decomposition is:\n" + str(result))
+    print("\nThe Groups of the decomposition are:\n" + str(result[0]))
+    print("The result of the decomposition is:\n" + str(result[1]))
     time.sleep(1)
     print("\nWill you continue using " + program_name + "?\nType 1 if so, anything else if not.")
     res1 = input()
@@ -293,9 +426,23 @@ def main():
     main_in(True, program_name)
 
 def prueba():
-    print(os.path.abspath('NuSMV'))
+    expresion = '(a | ((b & c) & (c | d)))'
+    v1 = BVarI('a', False)
+    v2 = BVarI('b', True)
+    v3 = BVarI('c', True)
+    v4 = BVarI('d', False)
+    model = [v1, v2, v3, v4]
+    t = parse_req_exp(expresion, 'prop')
+    sel = ['c']
+    nt = __change_values_tree(t, model, sel)
+    print(nt)
+    ntt = __simplify_tree(nt)
+    print(ntt)
+
+
 
 
 if __name__ == '__main__':
     # start_time = time.time()
     main()
+    # prueba()
