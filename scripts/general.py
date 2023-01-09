@@ -9,7 +9,7 @@ from generate_nuxmv import create_nusmv_file
 from iannopollo import not_in_v, renaming
 from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
-from scripts.classes import BVarI
+from classes import BVarI
 
 
 # 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
