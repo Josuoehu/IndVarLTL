@@ -257,14 +257,13 @@ def get_the_partition(formula, var_tree, variables, var_groups):
     i = 0
     for i in range(len(var_groups)):
         if i == 0:
-            selected_vars = flatt_list(var_groups[i:])
+            selected_vars = flatt_list(var_groups[i+1:])
         elif i == len(var_groups)-1:
             selected_vars = flatt_list(var_groups[:len(var_groups)-1])
         else:
             selected_vars = flatt_list(var_groups[:i] + var_groups[i+1:])
         f_i = get_new_formula(var_tree, model, selected_vars)
         f.append(f_i)
-        i += 1
     return f
 
 
@@ -303,7 +302,7 @@ def __simplify_tree(tree):
             elif tree[1] == 'False':
                 return 'True'
             else:
-                return tree[0] + ' ' + __simplify_tree(tree[1])
+                return tree[0] + '(' + __simplify_tree(tree[1]) + ')'
         elif len(tree) == 3:
             if tree[1] == 'True':
                 if tree[0] == '&':
@@ -371,9 +370,9 @@ def __simplify_tree(tree):
                         return izq
                     else:
                         # ->
-                        return '!' + izq
+                        return '!(' + izq + ')'
                 else:
-                    return izq + ' ' + tree[0] + ' ' + der
+                    return '(' + izq + ' ' + tree[0] + ' ' + der + ')'
         else:
             return tree[0]
     else:
