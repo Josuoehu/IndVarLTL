@@ -3,16 +3,34 @@ from classes import IniVisitor
 from generate import req_to_string
 
 # Grammar to parse de requirements
-grammar_prop = Grammar(
+
+# grammar_prop = Grammar(
+#             """
+#             Bicondicional = (Condicional "<->" Bicondicional) / Condicional
+#             Condicional = (Conjuncion "->" Condicional) / Conjuncion
+#             Conjuncion = (Disyuncion Or Conjuncion) / Disyuncion
+#             Disyuncion = (Literal And Disyuncion) / Literal
+#             Literal = Atomo / ("!" Literal)
+#             Atomo = Id / Agrupacion
+#             Agrupacion = "(" Bicondicional ")"
+#             Id          = ~"[A-Za-z0-9_]+"
+#             Not         = "!" / "~"
+#             And         = "&&" / "&"
+#             Or          = "||" / "|"
+#             """
+# )
+
+grammar_ltl = Grammar(
             """
             Bicondicional = (Condicional "<->" Bicondicional) / Condicional
             Condicional = (Conjuncion "->" Condicional) / Conjuncion
-            Conjuncion = (Disyuncion Or Conjuncion) / Disyuncion
-            Disyuncion = (Literal And Disyuncion) / Literal
-            Literal = Atomo / ("!" Literal)
-            Atomo = Id / Agrupacion
-            Agrupacion = "(" Bicondicional ")"
-            Id          = ~"[A-Za-z0-9_]+"
+            Conjuncion  = (Disyuncion Or Conjuncion) / Disyuncion
+            Disyuncion  = (Literal And Disyuncion) / Literal
+            Literal     = Atomo / (Not Literal)
+            Atomo       = Id / Agrupacion / (Tempop Agrupacion)
+            Agrupacion  = "(" Bicondicional ")"
+            Tempop      = "X" / "F" / "G"
+            Id          = ~"[a-z0-9_]+"
             Not         = "!" / "~"
             And         = "&&" / "&"
             Or          = "||" / "|"
@@ -23,9 +41,13 @@ grammar_prop = Grammar(
 
 
 def parse_req_exp(exp, gramatica):
-    if gramatica == 'prop':
+    # if gramatica == 'prop':
+    #     iv = IniVisitor()
+    #     tree = grammar_prop.parse(exp.replace(" ", ""))
+    #     return iv.visit(tree)
+    if gramatica == 'ltl':
         iv = IniVisitor()
-        tree = grammar_prop.parse(exp.replace(" ", ""))
+        tree = grammar_ltl.parse(exp.replace(" ", ""))
         return iv.visit(tree)
     else:
         return None
@@ -92,8 +114,8 @@ def insert_in_tree(tree, statement):
 
 
 def main():
-    str = '((a -> (b & c)) & (!a -> (!b & !c)))'
-    print(parse_req_exp(str))
+    str = '!F(a) | F(c)'
+    print(parse_req_exp(str, 'ltl'))
 
 if __name__ == '__main__':
     main()

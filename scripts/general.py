@@ -394,7 +394,7 @@ def full_process(first):
     # print(formula)
     print("\nAsking the question...")
     time.sleep(3)
-    var_tree = parse_req_exp(formula, 'prop')
+    var_tree = parse_req_exp(formula, 'ltl')
     variables = var_list_exp(var_tree)
     # create_nusmv_file([], variables)
     # result = partition(formula, variables)
