@@ -385,6 +385,43 @@ def __get_var_value(v, model):
             return str(m.get_value())
 
 
+def ask_for_env(variables, res):
+    res_a = res.replace(" ", "")
+    evars = res_a.split(",")
+    for v in evars:
+        if v not in variables:
+            print("The variable " + v + "does not exist in the formula. Try again or leave the process typing "
+                                        "\"quit\":\n")
+            r = input()
+            r = r.replace(" ", "")
+            if r == "quit":
+                quit("See you next time!")
+            else:
+                return ask_for_env(variables, r)
+    return evars
+
+
+def check_is_temporal(var_tree):
+    if not (type(var_tree) == str):
+        if len(var_tree) == 2:
+            if var_tree[0] == "F" or "G" or "X":
+                return True
+            else:
+                return check_is_temporal(var_tree[1])
+        elif len(var_tree) == 3:
+            if var_tree[0] == "F" or "G" or "X":
+                return True
+            else:
+                return check_is_temporal(var_tree[1]) or check_is_temporal(var_tree[2])
+        else:
+            if var_tree[0] == "F" or "G" or "X":
+                return True
+            else:
+                return False
+    else:
+        return False
+
+
 def full_process(first):
     # Gets the formula and calls the main method partition_recursive
     if first:
@@ -392,14 +429,23 @@ def full_process(first):
     else:
         formula = no_file_terminal()
     # print(formula)
-    print("\nAsking the question...")
-    time.sleep(3)
     var_tree = parse_req_exp(formula, 'ltl')
     variables = var_list_exp(var_tree)
-    # create_nusmv_file([], variables)
-    # result = partition(formula, variables)
-    var_groups = partition_recursive(formula, variables, [])
-    form_groups = get_the_partition(formula, var_tree, variables, var_groups)
+    if check_is_temporal(var_tree):
+        print("Can you tell me which are the environment variables? If there are not type \"-\":")
+        res = input()
+        print("\nAsking the question...")
+        time.sleep(3)
+        if res == "-":
+            var_groups = partition_recursive(formula, variables, [])
+        else:
+            env_vars = ask_for_env(variables, res)
+            sys_vars = not_in_v(env_vars, variables)
+            var_groups = partition_recursive(formula, sys_vars, env_vars)
+        form_groups = []
+    else:
+        var_groups = partition_recursive(formula, variables, [])
+        form_groups = get_the_partition(formula, var_tree, variables, var_groups)
     return var_groups, form_groups
 
 
