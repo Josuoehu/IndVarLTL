@@ -220,23 +220,17 @@ def checker_path(is_linux):
 def pregunta_path():
     # Questions to start the app
     is_linux = False
-    print("Do you want the app to look for NuSMV in your computer?\nType 1 if you want, 2 instead.")
-    res = input()
-    if res == '1':
-        print("Are you using this app on a linux or a mac?\nType 1 if linux, 2 if mac, any other thing if other.")
-        res1 = input()
-        if res1 == '1':
-            is_linux = True
-        elif res1 == '2':
-            is_linux = False
-        else:
-            print("Until the next one!")
-            quit()
-        print("Looking for the path...\n")
-        checker_path(is_linux)
+    print("Are you using this app on a linux or a mac?\nType 1 if linux, 2 if mac, any other thing if other.")
+    res1 = input()
+    if res1 == '1':
+        is_linux = True
+    elif res1 == '2':
+        is_linux = False
     else:
-        print("\nUntil the next one!")
+        print("Until the next one!")
         quit()
+    print("Looking for the path...\n")
+    checker_path(is_linux)
 
 
 def get_the_partition(formula, var_tree, variables, var_groups):
