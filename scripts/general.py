@@ -49,12 +49,15 @@ def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
             return cs
 
 
-def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model):
+def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, is_temporal):
     # cz = not_in_v(cs, changing_vars)
     newfi = oldfi
     while is_model:
         z = changing_vars[0]
-        inv = " | !(" + z + " <-> " + z + "_)"
+        if is_temporal:
+            inv = " | F(!(" + z + " <-> " + z + "_))"
+        else:
+            inv = " | !(" + z + " <-> " + z + "_)"
         newfi += inv
         call_nusmv("nuxmv_file.smv", newfi, "counterexample")
         if os.path.exists("../data/counterexample.xml"):
@@ -71,7 +74,7 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model):
         call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
         if os.path.exists("../data/counterexample.xml"):
             changing_vars = ob_vars(cs, treated)
-            return look_for_dep_var_while(fi, other_fi, changing_vars, cs, treated, cv, True)
+            return look_for_dep_var_while(fi, other_fi, changing_vars, cs, treated, cv, True, is_temporal)
         else:
             return cs
     else:
@@ -99,7 +102,7 @@ def partition(fi, cv):
     return conjuntos
 
 
-def partition_recursive(fi, cv, treated):
+def partition_recursive(fi, cv, treated, is_temporal):
     if not cv:
         return []
     # elif len(cv) == 1:
@@ -114,10 +117,10 @@ def partition_recursive(fi, cv, treated):
         call_nusmv("nuxmv_file.smv", newfi, "counterexample")
         if os.path.exists("../data/counterexample.xml"):
             changing_vars = ob_vars(cs, treated)
-            cs = look_for_dep_var_while(fi, newfi, changing_vars, cs, treated, cv, True)
+            cs = look_for_dep_var_while(fi, newfi, changing_vars, cs, treated, cv, True, is_temporal)
         cv = not_in_v(cs, cv)
         os.remove("../smv/nuxmv_file.smv")
-        return [cs] + partition_recursive(fi, cv, treated)
+        return [cs] + partition_recursive(fi, cv, treated, is_temporal)
 
 
 def __var_list_from_tree(exp):
@@ -404,17 +407,17 @@ def ask_for_env(variables, res):
 def check_is_temporal(var_tree):
     if not (type(var_tree) == str):
         if len(var_tree) == 2:
-            if var_tree[0] == "F" or "G" or "X":
+            if var_tree[0] == "F" or var_tree[0] == "G" or var_tree[0] == "X":
                 return True
             else:
                 return check_is_temporal(var_tree[1])
         elif len(var_tree) == 3:
-            if var_tree[0] == "F" or "G" or "X":
+            if var_tree[0] == "F" or var_tree[0] == "G" or var_tree[0] == "X":
                 return True
             else:
                 return check_is_temporal(var_tree[1]) or check_is_temporal(var_tree[2])
         else:
-            if var_tree[0] == "F" or "G" or "X":
+            if var_tree[0] == "F" or var_tree[0] == "G" or var_tree[0] == "X":
                 return True
             else:
                 return False
@@ -437,14 +440,14 @@ def full_process(first):
         print("\nAsking the question...")
         time.sleep(3)
         if res == "-":
-            var_groups = partition_recursive(formula, variables, [])
+            var_groups = partition_recursive(formula, variables, [], True)
         else:
             env_vars = ask_for_env(variables, res)
             sys_vars = not_in_v(env_vars, variables)
-            var_groups = partition_recursive(formula, sys_vars, env_vars)
+            var_groups = partition_recursive(formula, sys_vars, env_vars, True)
         form_groups = []
     else:
-        var_groups = partition_recursive(formula, variables, [])
+        var_groups = partition_recursive(formula, variables, [], False)
         form_groups = get_the_partition(formula, var_tree, variables, var_groups)
     return var_groups, form_groups
 
