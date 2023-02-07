@@ -9,6 +9,7 @@ from iannopollo import not_in_v, renaming, call_full_aalta
 from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
 from classes import BVarI
+from sys import platform
 
 
 # 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
@@ -284,19 +285,9 @@ def checker_path(is_linux, is_nusmv):
     create_bash_file(path, is_nusmv)
 
 
-def pregunta_path(is_nusmv):
+def pregunta_path(is_linux, is_nusmv):
     # Questions to start the app
-    is_linux = True
-    if is_nusmv:
-        print("Are you using this app on a linux or a mac?\nType 1 if linux, 2 if mac, any other thing if other.")
-        res1 = input()
-        if res1 == '1':
-            pass
-        elif res1 == '2':
-            is_linux = False
-        else:
-            quit("\nSee you next time!")
-        print("Looking for the path...\n")
+    print("Looking for the path...\n")
     checker_path(is_linux, is_nusmv)
 
 
@@ -514,6 +505,17 @@ def full_process(first, is_nusmv):
     return var_groups, form_groups
 
 
+def get_so():
+    if platform == "linux" or platform == "linux2":
+        return "linux"
+    elif platform == "darwin":
+        return "macos"
+    elif platform == "win32":
+        return "windows"
+    else:
+        quit("\nThere are some problems with your SO, see you next time!")
+
+
 def main_in(first, program_name, is_nusmv):
     result = full_process(first, is_nusmv)
     print("\nThe Groups of the decomposition are:\n" + str(result[0]))
@@ -530,19 +532,27 @@ def main_in(first, program_name, is_nusmv):
 def main():
     program_name = "Decomposition"
     print("Welcome to " + program_name + " app.")
-    print("\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
-    res1 = input()
-    is_nusmv = True
-    if res1 == '1':
+    os = get_so()
+    if os == "windows":
+        quit("We cannot execute this programm on Windows, sorry. See you in the near future!")
+    elif os == "macos":
+        print("We are using NuSMV during the hole process because we cannot use Aalta in MacOS.")
         if not os.path.isfile("./call_nusmv.sh"):
-            pregunta_path(is_nusmv)
-    elif res1 == '2':
-        is_nusmv = False
-        if not os.path.isfile("./call_aalta.sh"):
-            pregunta_path(is_nusmv)
+            pregunta_path(False, True)
     else:
-        quit("\nSee you next time!")
-    main_in(True, program_name, is_nusmv)
+        print("\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
+        res1 = input()
+        is_nusmv = True
+        if res1 == '1':
+            if not os.path.isfile("./call_nusmv.sh"):
+                pregunta_path(True, is_nusmv)
+        elif res1 == '2':
+            is_nusmv = False
+            if not os.path.isfile("./call_aalta.sh"):
+                pregunta_path(True, is_nusmv)
+        else:
+            quit("\nSee you next time!")
+        main_in(True, program_name, is_nusmv)
 
 def prueba():
     expresion = '(a | ((b & c) & (c | d)))'
