@@ -10,6 +10,7 @@ from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
 from classes import BVarI
 from sys import platform
+from os import path
 
 
 # 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
@@ -287,7 +288,7 @@ def checker_path(is_linux, is_nusmv):
 
 def pregunta_path(is_linux, is_nusmv):
     # Questions to start the app
-    print("Looking for the path...\n")
+    print("Looking for the path...")
     checker_path(is_linux, is_nusmv)
 
 
@@ -537,18 +538,18 @@ def main():
         quit("We cannot execute this programm on Windows, sorry. See you in the near future!")
     elif os == "macos":
         print("We are using NuSMV during the hole process because we cannot use Aalta in MacOS.")
-        if not os.path.isfile("./call_nusmv.sh"):
+        if not path.isfile("./call_nusmv.sh"):
             pregunta_path(False, True)
     else:
         print("\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
         res1 = input()
         is_nusmv = True
         if res1 == '1':
-            if not os.path.isfile("./call_nusmv.sh"):
+            if not path.isfile("./call_nusmv.sh"):
                 pregunta_path(True, is_nusmv)
         elif res1 == '2':
             is_nusmv = False
-            if not os.path.isfile("./call_aalta.sh"):
+            if not path.isfile("./call_aalta.sh"):
                 pregunta_path(True, is_nusmv)
         else:
             quit("\nSee you next time!")
