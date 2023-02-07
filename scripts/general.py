@@ -533,6 +533,7 @@ def main_in(first, program_name, is_nusmv):
 def main():
     program_name = "Decomposition"
     print("Welcome to " + program_name + " app.")
+    is_nusmv = True
     os = get_so()
     if os == "windows":
         quit("We cannot execute this programm on Windows, sorry. See you in the near future!")
@@ -543,17 +544,15 @@ def main():
     else:
         print("\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
         res1 = input()
-        is_nusmv = True
         if res1 == '1':
-            if not path.isfile("./call_nusmv.sh"):
-                pregunta_path(True, is_nusmv)
+            pass
         elif res1 == '2':
             is_nusmv = False
-            if not path.isfile("./call_aalta.sh"):
-                pregunta_path(True, is_nusmv)
         else:
             quit("\nSee you next time!")
-        main_in(True, program_name, is_nusmv)
+        if not path.isfile("./call_aalta.sh"):
+            pregunta_path(True, is_nusmv)
+    main_in(True, program_name, is_nusmv)
 
 def prueba():
     expresion = '(a | ((b & c) & (c | d)))'
