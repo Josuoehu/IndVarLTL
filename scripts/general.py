@@ -2,26 +2,29 @@ import os
 import argparse
 import stat
 import time
-from operator import is_
 
 from call import call_nusmv, call_get_path
 from generate_nuxmv import create_nusmv_file
-from iannopollo import not_in_v, renaming
+from iannopollo import not_in_v, renaming, call_full_aalta
 from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
 from classes import BVarI
 
 
 # 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
-def generate_exp(fi, cs, ncs):
+def generate_exp(fi, cs, ncs, is_nusmv):
     fi_cs = fi
     fi_not_cs = fi
     for v in cs:
         fi_cs = renaming(fi_cs, v, "_")
     for v in ncs:
         fi_not_cs = renaming(fi_not_cs, v, "_")
-    # !fi_cs || !fi_ncs || fi
-    return "!(" + fi_cs + ") | !(" + fi_not_cs + ") | (" + fi + ")"
+    if is_nusmv:
+        # !fi_cs || !fi_ncs || fi
+        return "!(" + fi_cs + ") | !(" + fi_not_cs + ") | (" + fi + ")"
+    else:
+        # fi_cs && fi_ncs && !fi
+        return "(" + fi_cs + ") & (" + fi_not_cs + ") & !(" + fi + ")"
 
 
 def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
@@ -38,7 +41,7 @@ def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
         treated.append(z)
         ncs = not_in_v(cs, cv)
         if ncs:
-            other_fi = generate_exp(fi, cs, ncs)
+            other_fi = generate_exp(fi, cs, ncs, True)
             call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
             if os.path.exists("../data/counterexample.xml"):
                 changing_vars = ob_vars(cs, treated)
@@ -47,6 +50,38 @@ def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
                 return cs
         else:
             return cs
+
+
+def look_for_dep_var_while_aalta(fi, oldfi, changing_vars, cs, treated, cv, is_model, is_temporal):
+    # cz = not_in_v(cs, changing_vars)
+    newfi = oldfi
+    while is_model:
+        z = changing_vars[0]
+        if is_temporal:
+            inv = " & G(" + z + " <-> " + z + "_)"
+        else:
+            inv = " & (" + z + " <-> " + z + "_)"
+        newfi += inv
+        aalta_res, model = call_full_aalta('expression.dimacs', newfi, cs, treated)
+        if aalta_res == 'sat' and model:
+            changing_vars = model
+        else:
+            is_model = False
+            # He cambiado esto dentro del else por la variable z
+            cs.append(z)
+            treated.append(z)
+    ncs = not_in_v(cs, cv)
+    if ncs:
+        other_fi = generate_exp(fi, cs, ncs, True)
+        call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
+        aalta_res, model = call_full_aalta('expression.dimacs', newfi, cs, treated)
+        if aalta_res == 'sat' and model:
+            changing_vars = model
+            cs = look_for_dep_var_while(fi, other_fi, changing_vars, cs, treated, cv, True, is_temporal)
+        else:
+            return cs
+    else:
+        return cs
 
 
 def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, is_temporal):
@@ -70,7 +105,7 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, 
             treated.append(z)
     ncs = not_in_v(cs, cv)
     if ncs:
-        other_fi = generate_exp(fi, cs, ncs)
+        other_fi = generate_exp(fi, cs, ncs, True)
         call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
         if os.path.exists("../data/counterexample.xml"):
             changing_vars = ob_vars(cs, treated)
@@ -91,7 +126,7 @@ def partition(fi, cv):
             treated.append(v)
             ncs = not_in_v(cs, cv)
             if ncs:
-                newfi = generate_exp(fi, cs, ncs)
+                newfi = generate_exp(fi, cs, ncs, True)
                 call_nusmv("nuxmv_file.smv", newfi, "counterexample")
                 if os.path.exists("../data/counterexample.xml"):
                     changing_vars = ob_vars(cs, treated)
@@ -100,6 +135,33 @@ def partition(fi, cv):
             conjuntos.append(cs)
             # print("New group " + str(cs))
     return conjuntos
+
+
+def partition_general(fi, cv, treated, is_temporal, is_nusmv):
+    if is_nusmv:
+        return partition_recursive(fi, cv, treated, is_temporal)
+    else:
+        return partition_recursive_aalta(fi, cv, treated, is_temporal)
+
+
+def partition_recursive_aalta(fi, cv, treated, is_temporal):
+    if not cv:
+        return []
+    # elif len(cv) == 1:
+    #     return [cv]
+    else:
+        v = cv[0]
+        cs = [v]
+        treated.append(v)
+        ncs = not_in_v(cs, cv)
+        newfi = generate_exp(fi, cs, ncs, False)
+        aalta_res, model = call_full_aalta('expression.dimacs', newfi, cs, treated)
+        if aalta_res == 'sat' and model:
+            changing_vars = model
+            cs = look_for_dep_var_while_aalta(fi, newfi, changing_vars, cs, treated, cv, True, is_temporal)
+        cv = not_in_v(cs, cv)
+        os.remove("../smv/nuxmv_file.smv")
+        return [cs] + partition_recursive_aalta(fi, cv, treated, is_temporal)
 
 
 def partition_recursive(fi, cv, treated, is_temporal):
@@ -113,7 +175,7 @@ def partition_recursive(fi, cv, treated, is_temporal):
         create_nusmv_file(treated, cv)
         treated.append(v)
         ncs = not_in_v(cs, cv)
-        newfi = generate_exp(fi, cs, ncs)
+        newfi = generate_exp(fi, cs, ncs, True)
         call_nusmv("nuxmv_file.smv", newfi, "counterexample")
         if os.path.exists("../data/counterexample.xml"):
             changing_vars = ob_vars(cs, treated)
@@ -192,17 +254,24 @@ def __get_formula():
         return t
 
 
-def create_bash_file(path):
+def create_bash_file(path, is_nusmv):
     # Create the NuSMV bash file to call it given the path
-    f = open("call_nusmv.sh", "w")
-    f.write("#!/bin/bash\n\n" + str(path) + " -int ../smv/$2 <<< $1")
-    f.close()
-    os.chmod("./call_nusmv.sh", stat.S_IRWXU)
+    if is_nusmv:
+        f = open("call_nusmv.sh", "w")
+        f.write("#!/bin/bash\n\n" + str(path) + " -int ../smv/$2 <<< $1")
+        f.close()
+        os.chmod("./call_nusmv.sh", stat.S_IRWXU)
+    else:
+        f = open("call_aalta.sh", "w")
+        f.write("#!/bin/bash\n\ncat $1 | " + str(path) + " -e > ../smv/$2")
+        f.close()
+        os.chmod("./call_aalta.sh", stat.S_IRWXU)
 
 
-def get_app_path(is_linux):
+
+def get_app_path(is_linux, is_nusmv):
     # Given if the system is Linux or not (MacOS) gets the path of NuSMV in the computer
-    call_get_path(is_linux, True)
+    call_get_path(is_linux, is_nusmv)
     f = open("../files/allpaths.txt")
     line = f.readline()
     if line[-1] == '\n':
@@ -211,26 +280,27 @@ def get_app_path(is_linux):
     return line
 
 
-def checker_path(is_linux):
-    # Gets the path and creates the bash file for NuSMV
-    path = get_app_path(is_linux)
-    create_bash_file(path)
+def checker_path(is_linux, is_nusmv):
+    # Gets the path and creates the bash file for NuSMV or Aalta
+    path = get_app_path(is_linux, is_nusmv)
+    create_bash_file(path, is_nusmv)
 
 
-def pregunta_path():
+def pregunta_path(is_nusmv):
     # Questions to start the app
-    is_linux = False
-    print("Are you using this app on a linux or a mac?\nType 1 if linux, 2 if mac, any other thing if other.")
-    res1 = input()
-    if res1 == '1':
-        is_linux = True
-    elif res1 == '2':
-        is_linux = False
-    else:
-        print("Until the next one!")
-        quit()
-    print("Looking for the path...\n")
-    checker_path(is_linux)
+    is_linux = True
+    if is_nusmv:
+        print("Are you using this app on a linux or a mac?\nType 1 if linux, 2 if mac, any other thing if other.")
+        res1 = input()
+        if res1 == '1':
+            pass
+        elif res1 == '2':
+            is_linux = False
+        else:
+            print("Until the next one!")
+            quit()
+        print("Looking for the path...\n")
+    checker_path(is_linux, is_nusmv)
 
 
 def get_the_partition(formula, var_tree, variables, var_groups):
@@ -242,6 +312,7 @@ def get_the_partition(formula, var_tree, variables, var_groups):
     #   Save the result of the final expression
     create_nusmv_file(variables, [])
     call_nusmv("nuxmv_file.smv", '!(' + formula + ')', "counterexample")
+    model = None
     if os.path.exists("../data/counterexample.xml"):
         counterex = parse_xml("../data/counterexample.xml")
         os.remove("../data/counterexample.xml")
@@ -419,7 +490,7 @@ def check_is_temporal(var_tree):
         return False
 
 
-def full_process(first):
+def full_process(first, is_nusmv):
     # Gets the formula and calls the main method partition_recursive
     if first:
         formula = __get_formula()
@@ -434,20 +505,20 @@ def full_process(first):
         print("\nAsking the question...")
         time.sleep(3)
         if res == "-":
-            var_groups = partition_recursive(formula, variables, [], True)
+            var_groups = partition_general(formula, variables, [], True, is_nusmv)
         else:
             env_vars = ask_for_env(variables, res)
             sys_vars = not_in_v(env_vars, variables)
-            var_groups = partition_recursive(formula, sys_vars, env_vars, True)
+            var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
         form_groups = []
     else:
-        var_groups = partition_recursive(formula, variables, [], False)
+        var_groups = partition_general(formula, variables, [], False, is_nusmv)
         form_groups = get_the_partition(formula, var_tree, variables, var_groups)
     return var_groups, form_groups
 
 
-def main_in(first, program_name):
-    result = full_process(first)
+def main_in(first, program_name, is_nusmv):
+    result = full_process(first, is_nusmv)
     print("\nThe Groups of the decomposition are:\n" + str(result[0]))
     print("The result of the decomposition is:\n" + str(result[1]))
     time.sleep(1)
@@ -464,8 +535,16 @@ def main():
     print("Is the first time you use this version of the app in this computer?\nType 1 if so, anything else if not.")
     res = input()
     if res == '1':
-        pregunta_path()
-    main_in(True, program_name)
+        print("Would you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
+        is_nusmv = True
+        if res == '1':
+            pass
+        elif res == '2':
+            is_nusmv = False
+        else:
+            quit("See you next time!")
+        pregunta_path(is_nusmv)
+    main_in(True, program_name, is_nusmv)
 
 def prueba():
     expresion = '(a | ((b & c) & (c | d)))'

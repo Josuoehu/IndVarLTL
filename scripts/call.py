@@ -9,7 +9,7 @@ def call_get_path(is_linux, is_nusmv):
             calling = './get_path.sh /home NuSMV'
     else:
         # Falta implementar
-        calling = ''
+        calling = './get_path.sh /home aalta'
     os.system(calling)
 
 

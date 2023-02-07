@@ -88,14 +88,13 @@ def create_file(name, expression):
         f.write(expression)
 
 
-def call_full_aalta(file_name, fi, var, cv, treated):
+def call_full_aalta(file_name, fi, cv, treated):
     ruta = '../files/' + file_name
     create_file(ruta, fi)
     call_aalta(file_name, 'result.txt')
     aalta_res, model = parse_aalta('../data/result.txt')
     model = list(set(model))
-    l3 = [x for x in model if x not in var]
-    l4 = not_in_v(cv, l3)
+    l4 = not_in_v(cv, model)
     l5 = not_in_v(treated, l4)
     os.remove('../data/result.txt')
     os.remove('../files/expression.dimacs')
