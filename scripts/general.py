@@ -72,12 +72,11 @@ def look_for_dep_var_while_aalta(fi, oldfi, changing_vars, cs, treated, cv, is_m
             treated.append(z)
     ncs = not_in_v(cs, cv)
     if ncs:
-        other_fi = generate_exp(fi, cs, ncs, True)
-        call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
-        aalta_res, model = call_full_aalta('expression.dimacs', newfi, cs, treated)
+        other_fi = generate_exp(fi, cs, ncs, False)
+        aalta_res, model = call_full_aalta('expression.dimacs', other_fi, cs, treated)
         if aalta_res == 'sat' and model:
             changing_vars = model
-            cs = look_for_dep_var_while(fi, other_fi, changing_vars, cs, treated, cv, True, is_temporal)
+            return look_for_dep_var_while_aalta(fi, other_fi, changing_vars, cs, treated, cv, True, is_temporal)
         else:
             return cs
     else:
@@ -160,7 +159,6 @@ def partition_recursive_aalta(fi, cv, treated, is_temporal):
             changing_vars = model
             cs = look_for_dep_var_while_aalta(fi, newfi, changing_vars, cs, treated, cv, True, is_temporal)
         cv = not_in_v(cs, cv)
-        os.remove("../smv/nuxmv_file.smv")
         return [cs] + partition_recursive_aalta(fi, cv, treated, is_temporal)
 
 
@@ -297,8 +295,7 @@ def pregunta_path(is_nusmv):
         elif res1 == '2':
             is_linux = False
         else:
-            print("Until the next one!")
-            quit()
+            quit("\nSee you next time!")
         print("Looking for the path...\n")
     checker_path(is_linux, is_nusmv)
 
@@ -463,7 +460,7 @@ def ask_for_env(variables, res):
             r = input()
             r = r.replace(" ", "")
             if r == "quit":
-                quit("See you next time!")
+                quit("\nSee you next time!")
             else:
                 return ask_for_env(variables, r)
     return evars
@@ -500,7 +497,7 @@ def full_process(first, is_nusmv):
     var_tree = parse_req_exp(formula, 'ltl')
     variables = var_list_exp(var_tree)
     if check_is_temporal(var_tree):
-        print("Can you tell me which are the environment variables? If there are not type \"-\":")
+        print("\nCan you tell me which are the environment variables? If there are not type \"-\":")
         res = input()
         print("\nAsking the question...")
         time.sleep(3)
@@ -525,25 +522,26 @@ def main_in(first, program_name, is_nusmv):
     print("\nWill you continue using " + program_name + "?\nType 1 if so, anything else if not.")
     res1 = input()
     if res1 == '1':
-        main_in(False, program_name)
+        main_in(False, program_name, is_nusmv)
     else:
         print("\nSee you next time!")
 
 
 def main():
     program_name = "Decomposition"
-    print("Is the first time you use this version of the app in this computer?\nType 1 if so, anything else if not.")
-    res = input()
-    if res == '1':
-        print("Would you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
-        is_nusmv = True
-        if res == '1':
-            pass
-        elif res == '2':
-            is_nusmv = False
-        else:
-            quit("See you next time!")
-        pregunta_path(is_nusmv)
+    print("Welcome to " + program_name + " app.")
+    print("\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
+    res1 = input()
+    is_nusmv = True
+    if res1 == '1':
+        if not os.path.isfile("./call_nusmv.sh"):
+            pregunta_path(is_nusmv)
+    elif res1 == '2':
+        is_nusmv = False
+        if not os.path.isfile("./call_aalta.sh"):
+            pregunta_path(is_nusmv)
+    else:
+        quit("\nSee you next time!")
     main_in(True, program_name, is_nusmv)
 
 def prueba():
