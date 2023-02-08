@@ -1,1 +1,2 @@
-(p -> F(a|b)) & (!p -> X(b|c))
+(p -> F(a|b)) & (!p -> X(b&c))
+env_vars: p

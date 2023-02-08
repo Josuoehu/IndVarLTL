@@ -214,29 +214,45 @@ def ob_vars(cs, treated):
     return l3
 
 
+def __env_process(l):
+    vars = l.lower().split(":")
+    print(str(vars) + " Split interior.")
+    if vars[0] == "env_vars":
+        return extract_env_vars(vars[1])
+    else:
+        return []
+
+
 def terminal_use():
     # Read the arguments from the terminal
     parser = argparse.ArgumentParser(description="Descomposition tool")
     parser.add_argument("-f", dest="filename", help="Input the file with the logical expression", 
                         metavar="FILE")
     args = parser.parse_args()
+    print("Entra aquí")
     if not args.filename:
-        return ""
+        return "", []
     else:
         if not os.path.exists(args.filename):
             raise Exception
         else:
             formula = ""
+            e_vars = []
             file = open(args.filename, "r")
             lines = file.readlines()
             for line in lines:
                 if line[-1] == '\n':
-                    l = line[:-1]
-                    formula += str(l)
+                    l = str(line[:-1])
+                    e_vars = __env_process(l)
+                    if not e_vars:
+                        formula += l
                 else:
-                    formula += str(line)
+                    e_vars = __env_process(line)
+                    if not e_vars:
+                        formula += str(line)
             file.close()
-            return formula
+            print("No hay variables de entorno" + str(e_vars))
+            return formula, e_vars
 
 
 def no_file_terminal():
@@ -247,11 +263,12 @@ def no_file_terminal():
 
 
 def __get_formula():
-    t = terminal_use()
-    if not t:
-        return no_file_terminal()
-    else:
-        return t
+    f, e = terminal_use()
+    print(f + " Es la formula")
+    print(str(e) + " Son las variables de entorno")
+    if not f:
+        f = no_file_terminal()
+    return f, e
 
 
 def create_bash_file(path, is_nusmv):
@@ -266,7 +283,6 @@ def create_bash_file(path, is_nusmv):
         f.write("#!/bin/bash\n\ncat $1 | " + str(path) + " -e > ../smv/$2")
         f.close()
         os.chmod("./call_aalta.sh", stat.S_IRWXU)
-
 
 
 def get_app_path(is_linux, is_nusmv):
@@ -443,8 +459,7 @@ def __get_var_value(v, model):
 
 
 def ask_for_env(variables, res):
-    res_a = res.replace(" ", "")
-    evars = res_a.split(",")
+    evars = extract_env_vars(res)
     for v in evars:
         if v not in variables:
             print("The variable " + v + "does not exist in the formula. Try again or leave the process typing "
@@ -455,6 +470,12 @@ def ask_for_env(variables, res):
                 quit("\nSee you next time!")
             else:
                 return ask_for_env(variables, r)
+    return evars
+
+
+def extract_env_vars(res):
+    res_a = res.replace(" ", "")
+    evars = res_a.split(",")
     return evars
 
 
@@ -482,27 +503,30 @@ def check_is_temporal(var_tree):
 def full_process(first, is_nusmv):
     # Gets the formula and calls the main method partition_recursive
     if first:
-        formula = __get_formula()
+        formula, env_vars = __get_formula()
     else:
         formula = no_file_terminal()
+        env_vars = []
     # print(formula)
     var_tree = parse_req_exp(formula, 'ltl')
     variables = var_list_exp(var_tree)
     if check_is_temporal(var_tree):
-        print("\nCan you tell me which are the environment variables? If there are not type \"-\":")
-        res = input()
-        print("\nAsking the question...")
-        time.sleep(3)
-        if res == "-":
-            var_groups = partition_general(formula, variables, [], True, is_nusmv)
+        sys_vars = variables.copy()
+        if not env_vars:
+            print("\nCan you tell me which are the environment variables? If there are not type \"-\":")
+            res = input()
+            if res != "-":
+                env_vars = ask_for_env(variables, res)
+                sys_vars = not_in_v(env_vars, variables)
         else:
-            env_vars = ask_for_env(variables, res)
             sys_vars = not_in_v(env_vars, variables)
-            var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
+        var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
         form_groups = []
     else:
         var_groups = partition_general(formula, variables, [], False, is_nusmv)
         form_groups = get_the_partition(formula, var_tree, variables, var_groups)
+        print("\nAsking the question...")
+        time.sleep(3)
     return var_groups, form_groups
 
 
