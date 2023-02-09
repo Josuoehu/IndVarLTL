@@ -31,6 +31,11 @@ def treat_line(line):
     else:
         return []
 
+def all_line_values(line):
+    if line[0] == '{':
+        l = line[1:-3]
+        variables = l.split(sep=',')
+
 
 def n_same_vars(variables):
     ret = []

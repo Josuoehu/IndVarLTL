@@ -308,16 +308,16 @@ def pregunta_path(is_linux, is_nusmv):
     checker_path(is_linux, is_nusmv)
 
 
-def get_the_partition(formula, var_tree, variables, var_groups):
+def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
     # Save the expression tree when created
     # Ask NuSMV for a model of the original formula
     # Save the value of the variables
     # While there are groups of the variables left
     #   Give the value to the rest of the variables and treat the tree
     #   Save the result of the final expression
+    model = None
     create_nusmv_file(variables, [])
     call_nusmv("nuxmv_file.smv", '!(' + formula + ')', "counterexample")
-    model = None
     if os.path.exists("../data/counterexample.xml"):
         counterex = parse_xml("../data/counterexample.xml")
         os.remove("../data/counterexample.xml")
@@ -524,7 +524,7 @@ def full_process(first, is_nusmv):
         form_groups = []
     else:
         var_groups = partition_general(formula, variables, [], False, is_nusmv)
-        form_groups = get_the_partition(formula, var_tree, variables, var_groups)
+        form_groups = get_the_partition(formula, var_tree, variables, var_groups, is_nusmv)
         print("\nAsking the question...")
         time.sleep(3)
     return var_groups, form_groups
@@ -569,13 +569,15 @@ def main():
         print("\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
         res1 = input()
         if res1 == '1':
-            pass
+            if not path.isfile("./call_nusmv.sh"):
+                pregunta_path(True, is_nusmv)
         elif res1 == '2':
             is_nusmv = False
+            if not path.isfile("./call_aalta.sh"):
+                pregunta_path(True, is_nusmv)
         else:
             quit("\nSee you next time!")
-        if not path.isfile("./call_aalta.sh"):
-            pregunta_path(True, is_nusmv)
+
     main_in(True, program_name, is_nusmv)
 
 def prueba():
