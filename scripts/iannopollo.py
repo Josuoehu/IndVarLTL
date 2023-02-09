@@ -5,7 +5,7 @@ from itertools import combinations
 from call import call_nusmv, call_nusmv_bounded, call_aalta
 from generate import req_to_string_2
 from readXML import parse_xml, not_same_var
-from read_aalta_result import parse_aalta
+from read_aalta_result import parse_aalta, parse_aalta_var_list
 
 
 def alg_iannopollo(env_vars, sys_vars, init_env, init_sys, ass, gua):
@@ -99,6 +99,16 @@ def call_full_aalta(file_name, fi, cv, treated):
     os.remove('../data/result.txt')
     os.remove('../files/expression.dimacs')
     return aalta_res, l5
+
+
+def call_aalta_var_list(file_name, fi):
+    ruta = '../files/' + file_name
+    create_file(ruta, fi)
+    call_aalta(file_name, 'result.txt')
+    aalta_res, model = parse_aalta_var_list('../data/result.txt')
+    os.remove('../data/result.txt')
+    os.remove('../files/expression.dimacs')
+    return aalta_res, model
 
 
 def look_for_dependent_variables(cs, fi, chang_vars, env_vars, treated, sys_vars, ass, gua, init_env, init_sys):

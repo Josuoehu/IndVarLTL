@@ -5,7 +5,7 @@ import time
 
 from call import call_nusmv, call_get_path
 from generate_nuxmv import create_nusmv_file
-from iannopollo import not_in_v, renaming, call_full_aalta
+from iannopollo import not_in_v, renaming, call_full_aalta, call_aalta_var_list
 from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
 from classes import BVarI
@@ -316,16 +316,21 @@ def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
     #   Give the value to the rest of the variables and treat the tree
     #   Save the result of the final expression
     model = None
-    create_nusmv_file(variables, [])
-    call_nusmv("nuxmv_file.smv", '!(' + formula + ')', "counterexample")
-    if os.path.exists("../data/counterexample.xml"):
-        counterex = parse_xml("../data/counterexample.xml")
-        os.remove("../data/counterexample.xml")
-        # Accedo al primer elemento de la lista compuesta por nodos, y luego a las variables normales
-        model = counterex[0][0]
+    if is_nusmv:
+        create_nusmv_file(variables, [])
+        call_nusmv("nuxmv_file.smv", '!(' + formula + ')', "counterexample")
+        if os.path.exists("../data/counterexample.xml"):
+            counterex = parse_xml("../data/counterexample.xml")
+            os.remove("../data/counterexample.xml")
+            # Accedo al primer elemento de la lista compuesta por nodos, y luego a las variables normales
+            model = counterex[0][0]
+            os.remove("../smv/nuxmv_file.smv")
+        else:
+            quit('It does not exist a model for the formula.')
     else:
-        quit('It does not exist a model for the formula.')
-    os.remove("../smv/nuxmv_file.smv")
+        aalta_res, model = call_aalta_var_list('expression.dimacs', formula)
+        if not model:
+            quit('It does not exist a model for the formula.')
     f = []
     i = 0
     for i in range(len(var_groups)):

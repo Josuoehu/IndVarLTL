@@ -21,6 +21,23 @@ def parse_aalta(file_text):
         i += 1
     return 'sat', distintic_vars
 
+def parse_aalta_var_list(file_text):
+    file = open(file_text, 'r')
+    distintic_vars = []
+    fin = True
+    i = 0
+    while fin:
+        line = file.readline()
+        if not line:
+            fin = False
+        else:
+            if i == 1:
+                if line[:-1] == 'unsat':
+                    return 'unsat', []
+            elif i > 1:
+                var_list = all_line_values(line)
+                return 'sat', var_list
+
 
 def treat_line(line):
     if line[0] == '{':
@@ -31,10 +48,15 @@ def treat_line(line):
     else:
         return []
 
+
 def all_line_values(line):
     if line[0] == '{':
         l = line[1:-3]
         variables = l.split(sep=',')
+        var_list = [know_false_name(v) for v in variables]
+        return var_list
+    else:
+        return []
 
 
 def n_same_vars(variables):
