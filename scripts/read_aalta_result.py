@@ -35,8 +35,10 @@ def parse_aalta_var_list(file_text):
                 if line[:-1] == 'unsat':
                     return 'unsat', []
             elif i > 1:
-                var_list = all_line_values(line)
-                return 'sat', var_list
+                if line[0] != "(":
+                    var_list = all_line_values(line)
+                    return 'sat', var_list
+            i+=1
 
 
 def treat_line(line):
