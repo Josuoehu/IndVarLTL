@@ -549,7 +549,7 @@ def get_so():
 def output_file(v_g, f_g, name):
     frag = name.split(sep="/")
     real_name = frag[len(frag)-1]
-    ruta = '../results/' + real_name[:-4] + '_res.txt'
+    ruta = '../results/' + real_name[:-4] + '_r.txt'
     out_file = open(ruta, 'w')
     out_file.write("Results of the Decomposition of " + real_name + " file.\n\n")
     out_file.write("The variables are decomposed in the following groups: ")
