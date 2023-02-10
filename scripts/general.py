@@ -547,6 +547,7 @@ def get_so():
 
 
 def output_file(v_g, f_g, name):
+    # Creation of the output file
     frag = name.split(sep="/")
     real_name = frag[len(frag)-1]
     ruta = '../results/' + real_name[:-4] + '_r.txt'
