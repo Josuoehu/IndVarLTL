@@ -1,0 +1,22 @@
+(in1&
+in2&
+in3&
+!in4&
+in5&
+in6&
+in7)->(
+(out1&
+out2&
+out3&
+out5&
+!internal1)&
+G(((out1 -> X(in4))&
+(in6 -> X(X(!in3)))&
+((in3 & in7) -> X(X(!in2)))&
+(in7 -> X(in1)))->
+(((in1 & in5) -> X(out1 & out2)) &
+(in4 -> X(out1)) &
+(internal1 -> X (out5)) &
+(internal1 -> X (!out3)) &
+(in2 -> X (internal1)))))
+env_vars:in1, in2, in3, in4, in5, in6, in7
