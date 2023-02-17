@@ -1,0 +1,46 @@
+(tempge0b &
+temple270b &
+usertempge0b &
+usertemple270b &
+temple270b &
+tempge0b &
+usertempge0b &
+usertemple270b) ->
+((setusertempge0b &
+!(lidblocked) &
+setusertemple270b &
+setusertempeq0b &
+!(cookertypecookerstatebe0) &
+!(cookertypecookerstatebe1) &
+!(cookertypecookerstatebe2))
+&(!((cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & cookertypecookerstatebe2))))
+&(!((cookertypecookerstatebe0 & (cookertypecookerstatebe1 & !(cookertypecookerstatebe2)))))
+&(!(((cookertypecookerstatebe0 & cookertypecookerstatebe1) & cookertypecookerstatebe2)))
+&((((!(cookertypecookerstatebe0) & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2))) | (!(cookertypecookerstatebe0) & (!(cookertypecookerstatebe1) & cookertypecookerstatebe2))) | (!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & !(cookertypecookerstatebe2)))) | (((!(cookertypecookerstatebe0) & cookertypecookerstatebe1) & cookertypecookerstatebe2) | ((cookertypecookerstatebe0 & !(cookertypecookerstatebe1)) & !(cookertypecookerstatebe2))))
+&(!(((cookertypeopstatusbe0 & !(cookertypeopstatusbe1)) & cookertypeopstatusbe2)))
+&(!((cookertypeopstatusbe0 & (cookertypeopstatusbe1 & !(cookertypeopstatusbe2)))))
+&(!(((cookertypeopstatusbe0 & cookertypeopstatusbe1) & cookertypeopstatusbe2)))
+&(((!(cookertypeopstatusbe0) & (!(cookertypeopstatusbe1) & !(cookertypeopstatusbe2))) | (((!(cookertypeopstatusbe0) & (!(cookertypeopstatusbe1) & cookertypeopstatusbe2)) | ((!(cookertypeopstatusbe0) & cookertypeopstatusbe1) & !(cookertypeopstatusbe2))) | (!(cookertypeopstatusbe0) & (cookertypeopstatusbe1 & cookertypeopstatusbe2)))) | ((cookertypeopstatusbe0 & !(cookertypeopstatusbe1)) & !(cookertypeopstatusbe2)))
+&(((!(cookertypecookerstatebe0) & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2))) & ok) -> (X (setusertempequsertempb) | X (!(((!(cookertypecookerstatebe0) & !(cookertypecookerstatebe1)) & !(cookertypecookerstatebe2))))))
+&(((!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & !(cookertypecookerstatebe2))) | ((!(cookertypecookerstatebe0) & cookertypecookerstatebe1) & cookertypecookerstatebe2)) -> X ((!((((!(cookertypecookerstatebe0) & cookertypecookerstatebe1) & !(cookertypecookerstatebe2)) | ((!(cookertypecookerstatebe0) & cookertypecookerstatebe1) & cookertypecookerstatebe2))) | lidblocked)))
+&((cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2))) -> X ((!((cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))) | beeper)))
+&(!((cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))) -> X ((!(!(((cookertypecookerstatebe0 & !(cookertypecookerstatebe1)) & !(cookertypecookerstatebe2)))) | !(beeper))))
+&((((((!(cookertypeopstatusbe0) & !(cookertypeopstatusbe1)) & !(cookertypeopstatusbe2)) & ((!(cookertypecookerstatebe0) & !(cookertypecookerstatebe1)) & !(cookertypecookerstatebe2))) | (((!(cookertypeopstatusbe0) & !(cookertypeopstatusbe1)) & cookertypeopstatusbe2) & ((!(cookertypecookerstatebe0) & !(cookertypecookerstatebe1)) & cookertypecookerstatebe2))) | (((!(cookertypeopstatusbe0) & (cookertypeopstatusbe1 & !(cookertypeopstatusbe2))) & ((!(cookertypecookerstatebe0) & cookertypecookerstatebe1) & !(cookertypecookerstatebe2))) | (((!(cookertypeopstatusbe0) & cookertypeopstatusbe1) & cookertypeopstatusbe2) & (!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & cookertypecookerstatebe2))))) | (((cookertypeopstatusbe0 & !(cookertypeopstatusbe1)) & !(cookertypeopstatusbe2)) & ((cookertypecookerstatebe0 & !(cookertypecookerstatebe1)) & !(cookertypecookerstatebe2))))
+&((ok & (!(cookertypecookerstatebe0) & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))) -> X ((!(cookertypecookerstatebe0) & (!(cookertypecookerstatebe1) & cookertypecookerstatebe2))))
+&((!(ok) & (!(cookertypecookerstatebe0) & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))) -> X ((!(cookertypecookerstatebe0) & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))))
+&(((ok & lidblocked) & ((!(cookertypecookerstatebe0) & !(cookertypecookerstatebe1)) & cookertypecookerstatebe2)) -> X ((!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & cookertypecookerstatebe2))))
+&((!((ok & lidblocked)) & ((!(cookertypecookerstatebe0) & !(cookertypecookerstatebe1)) & cookertypecookerstatebe2)) -> X ((!(cookertypecookerstatebe0) & (!(cookertypecookerstatebe1) & cookertypecookerstatebe2))))
+&(((!(timerfiredevent) & !(tempgtsetusertempb)) & (!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & !(cookertypecookerstatebe2)))) -> X ((!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & !(cookertypecookerstatebe2)))))
+&((timerfiredevent & ((!(cookertypecookerstatebe0) & cookertypecookerstatebe1) & !(cookertypecookerstatebe2))) -> X ((cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))))
+&(((tempgtsetusertempb & !(timerfiredevent)) & ((!(cookertypecookerstatebe0) & cookertypecookerstatebe1) & !(cookertypecookerstatebe2))) -> X ((!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & cookertypecookerstatebe2))))
+&(((!(templtsetusertempminus5b) & !(timerfiredevent)) & (!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & cookertypecookerstatebe2))) -> X ((!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & cookertypecookerstatebe2))))
+&((templtsetusertempminus5b & (!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & cookertypecookerstatebe2))) -> X (((!(cookertypecookerstatebe0) & cookertypecookerstatebe1) & !(cookertypecookerstatebe2))))
+&(((timerfiredevent & !(templtsetusertempminus5b)) & (!(cookertypecookerstatebe0) & (cookertypecookerstatebe1 & cookertypecookerstatebe2))) -> X ((cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))))
+&((ok & (cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))) -> X (((!(cookertypecookerstatebe0) & !(cookertypecookerstatebe1)) & !(cookertypecookerstatebe2))))
+&((!(ok) & (cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))) -> X ((cookertypecookerstatebe0 & (!(cookertypecookerstatebe1) & !(cookertypecookerstatebe2)))))
+&(tempgtsetusertempb -> !(templtsetusertempminus5b))
+&(templtsetusertempminus5b -> !(tempgtsetusertempb))
+&(templtsetusertempminus5b -> !(tempgtsetusertempb))
+&((setusertempeq0b & tempge0b) -> !(templtsetusertempminus5b))
+&(tempgtsetusertempb -> !(templtsetusertempminus5b)))
+env_vars: timerfiredevent,ok,usertempge0b,usertemple270b,temple270b,tempge0b
