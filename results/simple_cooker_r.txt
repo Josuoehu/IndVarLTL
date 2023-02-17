@@ -1,0 +1,4 @@
+Results of the Decomposition of simple_cooker.txt file.
+
+The variables are decomposed in the following groups: ['setusertempge0b'], ['lidblocked'], ['setusertemple270b'], ['setusertempeq0b'], ['cookertypecookerstatebe0'], ['cookertypecookerstatebe1'], ['cookertypecookerstatebe2'], ['cookertypeopstatusbe0'], ['cookertypeopstatusbe1'], ['cookertypeopstatusbe2'], ['setusertempequsertempb'], ['beeper'], ['tempgtsetusertempb'], ['templtsetusertempminus5b']
+Formula decomposition for LTL functionality is not available yet, coming soon
