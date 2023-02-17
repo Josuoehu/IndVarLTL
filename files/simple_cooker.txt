@@ -43,4 +43,4 @@ setusertempeq0b &
 &(templtsetusertempminus5b -> !(tempgtsetusertempb))
 &((setusertempeq0b & tempge0b) -> !(templtsetusertempminus5b))
 &(tempgtsetusertempb -> !(templtsetusertempminus5b)))
-env_vars: timerfiredevent,ok,usertempge0b,usertemple270b,temple270b,tempge0b
+env_vars: timerfiredevent,ok, usertempge0b, usertemple270b, temple270b,tempge0b

@@ -2,4 +2,4 @@ G((p -> (a | X (b)))&
 (((X (p)) & p) -> X (b))&
 ((!p) -> (a | (X (a))))&
 (((X (p)) & !p) -> X (a)))
-env_vars: p
+env_vars: q
