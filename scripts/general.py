@@ -13,6 +13,9 @@ from sys import platform
 from os import path
 
 
+# from scripts.generate import req_to_string_2, req_to_string
+
+
 # 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
 def generate_exp(fi, cs, ncs, is_nusmv):
     fi_cs = fi
@@ -118,7 +121,7 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, 
 
 
 def partition(fi, cv):
-    conjuntos =[]
+    conjuntos = []
     cs = []
     treated = []
     for v in cv:
@@ -226,7 +229,7 @@ def __env_process(l):
 def terminal_use():
     # Read the arguments from the terminal
     parser = argparse.ArgumentParser(description="Descomposition tool")
-    parser.add_argument("-f", dest="filename", help="Input the file with the logical expression", 
+    parser.add_argument("-f", dest="filename", help="Input the file with the logical expression",
                         metavar="FILE")
     args = parser.parse_args()
     print("Entra aquí")
@@ -334,11 +337,11 @@ def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
     i = 0
     for i in range(len(var_groups)):
         if i == 0:
-            selected_vars = flatt_list(var_groups[i+1:])
-        elif i == len(var_groups)-1:
-            selected_vars = flatt_list(var_groups[:len(var_groups)-1])
+            selected_vars = flatt_list(var_groups[i + 1:])
+        elif i == len(var_groups) - 1:
+            selected_vars = flatt_list(var_groups[:len(var_groups) - 1])
         else:
-            selected_vars = flatt_list(var_groups[:i] + var_groups[i+1:])
+            selected_vars = flatt_list(var_groups[:i] + var_groups[i + 1:])
         f_i = get_new_formula(var_tree, model, selected_vars)
         f.append(f_i)
     return f
@@ -360,7 +363,8 @@ def __change_values_tree(tree, model, sel_vars):
         if len(tree) == 2:
             return [tree[0], __change_values_tree(tree[1], model, sel_vars)]
         elif len(tree) == 3:
-            return [tree[0], __change_values_tree(tree[1], model, sel_vars), __change_values_tree(tree[2], model, sel_vars)]
+            return [tree[0], __change_values_tree(tree[1], model, sel_vars),
+                    __change_values_tree(tree[2], model, sel_vars)]
         else:
             # No se en que caso se da esto pero por si acaso
             return [__change_values_tree(tree[0], model, sel_vars)]
@@ -369,6 +373,91 @@ def __change_values_tree(tree, model, sel_vars):
             return __get_var_value(tree, model)
         else:
             return tree
+
+
+def __sink_negations(tree):
+    # From a expressions sinks the negations
+    if not (type(tree) == str):
+        if len(tree) == 2:
+            if tree[0] == '!' and type(tree[1]) != 'str':
+                return __profundity(tree[1])
+            else:
+                return __sink_negations(tree[1])
+        elif len(tree) == 3:
+            if tree[0] == '->':
+                pre = '|'
+                izq = __sink_negations(['!', tree[1]])
+            else:
+                pre = tree[0]
+                izq = __sink_negations(tree[1])
+            der = __sink_negations(tree[2])
+            return [pre, izq, der]
+        else:
+            return tree
+    else:
+        return tree
+
+
+def __profundity(tree):
+    if not (type(tree) == str):
+        # Quiere decir que hay una negacion con lo que se contrarestan
+        if len(tree) == 2:
+            if tree[0] == '!':
+                return tree[1]
+            else:
+                return __profundity(tree[1])
+        # Puede ser que se pueda sustituir por un else.
+        elif len(tree) == 3:
+            izq = __profundity(tree[1])
+            der = __profundity(tree[2])
+            if tree[0] == '|':
+                return ['&', izq, der]
+            else:
+                return ['|', izq, der]
+        else:
+            raise Exception('Dont know the case.')
+    else:
+        return ['!', tree]
+
+
+def __polarity_in(tree, pol):
+    if type(tree) == str:
+        if pol.get(tree) is None:
+            pol[tree] = 'True'
+        elif pol.get(tree) == 'True':
+            pass
+        elif pol.get(tree) == 'False':
+            pol[tree] = 'No polarity'
+        else:
+            pass
+    else:
+        if len(tree) == 2:
+            if tree[0] == '!':
+                if type(tree[1]) == str:
+                    if pol.get(tree[1]) is None:
+                        pol[tree[1]] = 'False'
+                    elif pol.get(tree[1]) == 'False':
+                        pass
+                    elif pol.get(tree[1]) == 'True':
+                        pol[tree[1]] = 'No polarity'
+                    else:
+                        pass
+                else:
+                    raise Exception('This should be a variable.')
+            else:
+                __polarity_in(tree[1], pol)
+        # Puede ser que se pueda sustituir por un else.
+        elif len(tree) == 3:
+            __polarity_in(tree[1], pol)
+            __polarity_in(tree[2], pol)
+        else:
+            raise Exception('En teoria no deberia haber.')
+
+
+def polarity(tree):
+    dict_polarity = {}
+    __polarity_in(tree, dict_polarity)
+    return dict_polarity
 
 
 def __simplify_tree(tree):
@@ -549,7 +638,7 @@ def get_so():
 def output_file(v_g, f_g, name):
     # Creation of the output file
     frag = name.split(sep="/")
-    real_name = frag[len(frag)-1]
+    real_name = frag[len(frag) - 1]
     ruta = '../results/' + real_name[:-4] + '_r.txt'
     out_file = open(ruta, 'w')
     out_file.write("Results of the Decomposition of " + real_name + " file.\n\n")
@@ -599,7 +688,8 @@ def main():
         if not path.isfile("./call_nusmv.sh"):
             pregunta_path(False, True)
     else:
-        print("\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
+        print(
+            "\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
         res1 = input()
         if res1 == '1':
             if not path.isfile("./call_nusmv.sh"):
@@ -613,21 +703,27 @@ def main():
 
     main_in(True, program_name, is_nusmv)
 
+
 def prueba():
-    expresion = '(a | ((b & c) & (c | d)))'
-    v1 = BVarI('a', False)
-    v2 = BVarI('b', True)
-    v3 = BVarI('c', True)
-    v4 = BVarI('d', False)
-    model = [v1, v2, v3, v4]
-    t = parse_req_exp(expresion, 'prop')
-    sel = ['c']
-    nt = __change_values_tree(t, model, sel)
-    print(nt)
-    ntt = __simplify_tree(nt)
-    print(ntt)
-
-
+    # expresion = '(a | !((b & c) & !(c | d))) & !a'
+    # expresion = 'G((a -> X(v & !t))&(!a -> X(!v & t))&(v -> X(!w & z))&(!v -> X(w & !z))&((b & w) -> X(y))&(!(b) -> X(!y))&((b & c) -> X(x))&(!b -> X(!x)))'
+    # expresion = 'G((p -> (a | X (b))) & (((X(p)) & p) -> X (b)) & ((!p) -> (a | (X (a)))) & (((X(p)) & !p) -> X (a)))'
+    expresion = '(in1&in2&in3&!in4&in5&in6&in7)->((out1&out2&out3&out5&!internal1)&G(((in6 -> X(X(!in3)))&((in3 & in7) -> X(X(!in2)))&(in7 -> X(in1)))->((internal1 -> X (out5)) &(internal1 -> X (!out3)) &(in2 -> X (internal1)))))'
+    # v1 = BVarI('a', False)
+    # v2 = BVarI('b', True)
+    # v3 = BVarI('c', True)
+    # v4 = BVarI('d', False)
+    # model = [v1, v2, v3, v4]
+    t = parse_req_exp(expresion, 'ltl')
+    # sel = ['c']
+    # nt = __change_values_tree(t, model, sel)
+    # print(nt)
+    # ntt = __simplify_tree(nt)
+    # print(ntt)
+    t = __sink_negations(t)
+    print(t)
+    print(req_to_string(t))
+    print(polarity(t))
 
 
 if __name__ == '__main__':
