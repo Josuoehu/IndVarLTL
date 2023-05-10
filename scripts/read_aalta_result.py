@@ -1,4 +1,4 @@
-from classes import BVarI
+from classes import BVarI, SLinkedList, LinkNode
 
 
 def parse_aalta(file_text):
@@ -21,11 +21,15 @@ def parse_aalta(file_text):
         i += 1
     return 'sat', distintic_vars
 
+
 def parse_aalta_var_list(file_text):
     file = open(file_text, 'r')
-    distintic_vars = []
+    modelo = dict()
     fin = True
+    num_states = 0
+    return_state = -1
     i = 0
+    vuelta = False
     while fin:
         line = file.readline()
         if not line:
@@ -37,8 +41,18 @@ def parse_aalta_var_list(file_text):
             elif i > 1:
                 if line[0] != "(":
                     var_list = all_line_values(line)
-                    return 'sat', var_list
+                    if vuelta:
+                        return_state = num_states
+                        vuelta = False
+                    modelo[num_states] = [var_list, (num_states+1)]
+                    i+=1
+                elif line[0] == ')':
+                    prev_vars = modelo[num_states][0]
+                    modelo[num_states] = [prev_vars, return_state]
+                else:
+                    vuelta = True
             i+=1
+    return 'sat', modelo
 
 
 def treat_line(line):

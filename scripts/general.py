@@ -12,6 +12,8 @@ from classes import BVarI
 from sys import platform
 from os import path
 
+from scripts.test import get_the_partition2
+
 
 # from scripts.generate import req_to_string_2, req_to_string
 
@@ -232,7 +234,7 @@ def terminal_use():
     parser.add_argument("-f", dest="filename", help="Input the file with the logical expression",
                         metavar="FILE")
     args = parser.parse_args()
-    print("Entra aquí")
+    # print("Entra aquí")
     if not args.filename:
         return "", [], ""
     else:
@@ -334,7 +336,6 @@ def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
         if not model:
             quit('It does not exist a model for the formula.')
     f = []
-    i = 0
     for i in range(len(var_groups)):
         if i == 0:
             selected_vars = flatt_list(var_groups[i + 1:])
@@ -397,6 +398,47 @@ def __sink_negations(tree):
     else:
         return tree
 
+
+def __delete_var(tree, variab):
+    if not (type(tree) == str):
+        if len(tree) == 3:
+            izq = __delete_var_in(tree[1], variab)
+            der = __delete_var_in(tree[2], variab)
+            if not izq:
+                return der
+            elif not der:
+                return izq
+            else:
+                return [tree[0], izq, der]
+        elif len(tree) == 2:
+            neg = __delete_var_in(tree[1], variab)
+            if not neg:
+                return []
+            else:
+                return tree
+    else:
+        return __delete_var_in(tree, variab)
+
+
+def __delete_var_in(tree, variab):
+    if not (type(tree) == str):
+        if len(tree) == 2:
+            if not (type(tree[1]) == str):
+                return ['!', __delete_var_in(tree[1], variab)]
+            else:
+                if tree[1] == variab:
+                    return []
+                else:
+                    return tree
+        elif len(tree) == 3:
+            return __delete_var(tree, variab)
+        else:
+            return tree
+    else:
+        if tree == variab:
+            return []
+        else:
+            return tree
 
 def __profundity(tree):
     if not (type(tree) == str):
@@ -593,6 +635,9 @@ def check_is_temporal(var_tree):
         return False
 
 
+
+
+
 def full_process(first, is_nusmv):
     # Gets the formula and calls the main method partition_recursive
     if first:
@@ -615,6 +660,7 @@ def full_process(first, is_nusmv):
         else:
             sys_vars = not_in_v(env_vars, variables)
         var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
+        form_groups2 = get_the_partition2(formula, var_tree, env_vars, sys_vars, var_groups, is_nusmv)
         form_groups = []
     else:
         var_groups = partition_general(formula, variables, [], False, is_nusmv)
@@ -705,25 +751,29 @@ def main():
 
 
 def prueba():
-    # expresion = '(a | !((b & c) & !(c | d))) & !a'
+    expresion1 = '(a | !((b & c) & !(c | d))) & !a'
+    expresion2 = '((a | (b & c)) & (d | !e) & !e)'
+    v = 'e'
     # expresion = 'G((a -> X(v & !t))&(!a -> X(!v & t))&(v -> X(!w & z))&(!v -> X(w & !z))&((b & w) -> X(y))&(!(b) -> X(!y))&((b & c) -> X(x))&(!b -> X(!x)))'
     # expresion = 'G((p -> (a | X (b))) & (((X(p)) & p) -> X (b)) & ((!p) -> (a | (X (a)))) & (((X(p)) & !p) -> X (a)))'
-    expresion = '(in1&in2&in3&!in4&in5&in6&in7)->((out1&out2&out3&out5&!internal1)&G(((in6 -> X(X(!in3)))&((in3 & in7) -> X(X(!in2)))&(in7 -> X(in1)))->((internal1 -> X (out5)) &(internal1 -> X (!out3)) &(in2 -> X (internal1)))))'
+    # expresion = '(in1&in2&in3&!in4&in5&in6&in7)->((out1&out2&out3&out5&!internal1)&G(((in6 -> X(X(!in3)))&((in3 & in7) -> X(X(!in2)))&(in7 -> X(in1)))->((internal1 -> X (out5)) &(internal1 -> X (!out3)) &(in2 -> X (internal1)))))'
     # v1 = BVarI('a', False)
     # v2 = BVarI('b', True)
     # v3 = BVarI('c', True)
     # v4 = BVarI('d', False)
     # model = [v1, v2, v3, v4]
-    t = parse_req_exp(expresion, 'ltl')
+    t = parse_req_exp(expresion2, 'ltl')
     # sel = ['c']
     # nt = __change_values_tree(t, model, sel)
     # print(nt)
     # ntt = __simplify_tree(nt)
     # print(ntt)
-    t = __sink_negations(t)
-    print(t)
-    print(req_to_string(t))
-    print(polarity(t))
+    t1 = __delete_var(t, v)
+    print(req_to_string(t1))
+    # t = __sink_negations(t)
+    # print(t)
+    # print(req_to_string(t))
+    # print(polarity(t))
 
 
 if __name__ == '__main__':

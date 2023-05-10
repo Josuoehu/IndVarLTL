@@ -47,7 +47,6 @@ class EVar(Var):
         return self.minim
 
     def __str__(self):
-
         v = super().__str__() + str(self.get_min()) + '..' + str(self.maxim)
         return v
 
@@ -65,7 +64,6 @@ class RVar(Var):
         return self.minim
 
     def __str__(self):
-
         v = super().__str__() + str(self.minim) + '..' + str(self.maxim)
         return v
 
@@ -224,12 +222,12 @@ class BVarI(BVar):
             return False
 
     def __str__(self):
-            v = super().__str__()
-            return v
+        v = super().__str__()
+        return v
 
     def __eq__(self, o: object) -> bool:
         if type(o) == BVarI:
-            if self.name == o.get_name(): #and self.value == o.get_value():
+            if self.name == o.get_name():  # and self.value == o.get_value():
                 return True
             else:
                 return False
@@ -282,7 +280,7 @@ class Edge(object):
 
     def __str__(self):
         return str(self.src) + '--' + str(self.weight) + '-->' + \
-               str(self.dest)
+            str(self.dest)
 
 
 class Digraph(object):
@@ -320,7 +318,7 @@ class Digraph(object):
         for src in self.nodes:
             for ar in self.edges[src]:
                 result = result + str(src) + \
-                        '---(' + str(ar[0]) + ')--->' + str(ar[1]) + '\n'
+                         '---(' + str(ar[0]) + ')--->' + str(ar[1]) + '\n'
         return result[:-1]  # remove last newline
 
 
@@ -367,6 +365,7 @@ class IniVisitor(NodeVisitor):
 def main():
     entero = RVar("hola", 5, 1)
     print(str(entero))
+
 
 if __name__ == '__main__':
     main()
