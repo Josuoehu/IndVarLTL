@@ -1,4 +1,4 @@
-from classes import BVarI, SLinkedList, LinkNode
+from classes import BVarI
 
 
 def parse_aalta(file_text):

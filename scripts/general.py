@@ -12,7 +12,7 @@ from classes import BVarI
 from sys import platform
 from os import path
 
-from scripts.test import get_the_partition2
+from scripts.test import get_the_partition2, manage_groups
 
 
 # from scripts.generate import req_to_string_2, req_to_string
@@ -661,6 +661,8 @@ def full_process(first, is_nusmv):
         else:
             sys_vars = not_in_v(env_vars, variables)
         var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
+        input_var_groups = partition_general(formula, sys_vars + env_vars, [], True, is_nusmv)
+        manage_groups(var_groups, input_var_groups, sys_vars, env_vars)
         form_groups2 = get_the_partition2(formula, var_tree, env_vars, sys_vars, var_groups, is_nusmv)
         form_groups = []
     else:

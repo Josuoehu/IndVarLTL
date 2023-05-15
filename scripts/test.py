@@ -1,11 +1,21 @@
 import os
 
 from scripts.classes import BVarI
-from scripts.general import full_process, flatt_list, __delete_var, __get_var_value_propositional, __sink_negations, \
-    __simplify_tree
+from scripts.general import flatt_list, __delete_var, __get_var_value_propositional, __simplify_tree, __sink_negations
 from scripts.generate import req_to_string
 from scripts.iannopollo import call_aalta_var_list
 
+
+def manage_groups(var_grups, input_groups, sys_vars, env_vars):
+    relation = []
+    for i, grupo in enumerate(var_grups):
+        for j, i_group in enumerate(input_groups):
+            for v in grupo:
+                if v not in i_group:
+                    break
+            relation.append([i,j])
+            break
+    return relation
 
 def check_what_is_wrong(formula, variables):
     # Formula to check which variables are incorrect
@@ -161,8 +171,11 @@ def get_the_partition2(formula, var_tree, env_vars, sys_vars, var_groups, is_nus
         f.append(f_i)
     return f
 def principal():
-    os.system("python3 general.py -f ../files/form.txt")
-
+    # os.system("python3 general.py -f ../files/form.txt")
+    g1 = [['out1'], ['out2'], ['out3', 'internal1', 'out5']]
+    g2 = [['out1', 'out2', 'out3', 'in1', 'in2', 'in3', 'in4', 'in5', 'in6', 'in7', 'internal1', 'out5']]
+    a = manage_groups(g1, g2, g1, g2)
+    print(a)
 
 if __name__ == '__main__':
     principal()
