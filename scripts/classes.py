@@ -221,6 +221,12 @@ class BVarI(BVar):
         else:
             return False
 
+    def eq_value(self, o: object):
+        if type(0) == BVarI:
+            return self.get_value() == o.get_value()
+        else:
+            raise Exception('Yo are trying to compare two different variable types.')
+
     def __str__(self):
         v = super().__str__()
         return v

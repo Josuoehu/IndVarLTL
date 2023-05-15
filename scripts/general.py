@@ -343,7 +343,7 @@ def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
             selected_vars = flatt_list(var_groups[:len(var_groups) - 1])
         else:
             selected_vars = flatt_list(var_groups[:i] + var_groups[i + 1:])
-        f_i = get_new_formula(var_tree, model, selected_vars)
+        f_i = get_new_formula_propositional(var_tree, model, selected_vars)
         f.append(f_i)
     return f
 
@@ -352,26 +352,26 @@ def flatt_list(l):
     return [item for sublist in l for item in sublist]
 
 
-def get_new_formula(tree, model, sel_vars):
+def get_new_formula_propositional(tree, model, sel_vars):
     # Given a tree of the formula and a model that satisfies it, returns
-    t = __change_values_tree(tree, model, sel_vars)
+    t = __change_values_tree_propositional(tree, model, sel_vars)
     nt = __simplify_tree(t)
     return nt
 
 
-def __change_values_tree(tree, model, sel_vars):
+def __change_values_tree_propositional(tree, model, sel_vars):
     if not (type(tree) == str):
         if len(tree) == 2:
-            return [tree[0], __change_values_tree(tree[1], model, sel_vars)]
+            return [tree[0], __change_values_tree_propositional(tree[1], model, sel_vars)]
         elif len(tree) == 3:
-            return [tree[0], __change_values_tree(tree[1], model, sel_vars),
-                    __change_values_tree(tree[2], model, sel_vars)]
+            return [tree[0], __change_values_tree_propositional(tree[1], model, sel_vars),
+                    __change_values_tree_propositional(tree[2], model, sel_vars)]
         else:
             # No se en que caso se da esto pero por si acaso
-            return [__change_values_tree(tree[0], model, sel_vars)]
+            return [__change_values_tree_propositional(tree[0], model, sel_vars)]
     else:
         if tree in sel_vars:
-            return __get_var_value(tree, model)
+            return __get_var_value_propositional(tree, model)
         else:
             return tree
 
@@ -439,6 +439,7 @@ def __delete_var_in(tree, variab):
             return []
         else:
             return tree
+
 
 def __profundity(tree):
     if not (type(tree) == str):
@@ -587,7 +588,7 @@ def __simplify_tree(tree):
         return tree
 
 
-def __get_var_value(v, model):
+def __get_var_value_propositional(v, model):
     for m in model:
         if v == m.get_name():
             return str(m.get_value())
