@@ -39,16 +39,15 @@ def parse_aalta_var_list(file_text):
                 if line[:-1] == 'unsat':
                     return 'unsat', []
             elif i > 1:
-                if line[0] != "(":
+                if line[0] == ')':
+                    prev_vars = modelo[num_states][0]
+                    modelo[num_states] = [prev_vars, return_state]
+                elif line[0] != "(":
                     var_list = all_line_values(line)
                     if vuelta:
                         return_state = num_states
                         vuelta = False
                     modelo[num_states] = [var_list, (num_states+1)]
-                    i+=1
-                elif line[0] == ')':
-                    prev_vars = modelo[num_states][0]
-                    modelo[num_states] = [prev_vars, return_state]
                 else:
                     vuelta = True
             i+=1

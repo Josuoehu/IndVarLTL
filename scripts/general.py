@@ -11,8 +11,7 @@ from req_parser import parse_req_exp
 from classes import BVarI
 from sys import platform
 from os import path
-
-from scripts.test import get_the_partition2, manage_groups
+from scripts.generate import req_to_string
 
 
 # from scripts.generate import req_to_string_2, req_to_string
@@ -348,6 +347,177 @@ def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
     return f
 
 
+def get_the_partition2(formula, var_tree, var_groups, grupos, is_nusmv):
+    f = []
+    for i in range(len(var_groups)):
+        if i == 0:
+            selected_vars = flatt_list(var_groups[i + 1:])
+        elif i == len(var_groups) - 1:
+            selected_vars = flatt_list(var_groups[:len(var_groups) - 1])
+        else:
+            selected_vars = flatt_list(var_groups[:i] + var_groups[i + 1:])
+        w_evars = grupos[i]
+        f_i = get_new_formula2(var_tree, selected_vars, w_evars)
+        f.append(f_i)
+    return f
+
+
+def get_new_formula2(var_tree, selected_vars, grupo):
+    # Deletes the other variables that are not correct in that formula.
+    orig_tree = var_tree.copy()
+    original_formula = req_to_string(var_tree)
+    for s in selected_vars:
+        var_tree = __delete_var(var_tree, s)
+    formula = req_to_string(var_tree)
+    check_if_correct(var_tree, formula, original_formula, orig_tree, selected_vars, grupo)
+    return var_tree
+
+def check_if_correct(var_tree, formula, orig_f, orig_tree, selected_vars, grupo):
+    # Checks if the formula obtained is correct having a parcial formula, the original and the
+    # environment variables.
+    prob_vars_e = 'G('
+    prob_vars = []
+    # Para cada una de las variables de entorno pertenecientes al grupo.
+    for v in grupo[1]:
+        # formula & G(v). If there is a problem is added to prob_vars and prob_vars_expression
+        positive, prob_vars_e = correct_variable(formula, orig_f, v, prob_vars, prob_vars_e, True)
+        # If it is ok, must check the negation of v. If there was already a problem you do not need to.
+        if not positive:
+            # formula & G(!v). If there is a problem is added to prob_vars and prob_vars_expression
+           a , prob_vars_e = correct_variable(formula, orig_f, v, prob_vars, prob_vars_e, False)
+    if prob_vars:
+        # Asking for a model in which one or more env_vars has/have problems.
+        f2 = orig_f + ' & ' + prob_vars_e[:-3] + ')'
+        aalta_res, model = call_aalta_var_list('expression.dimacs', f2)
+        if aalta_res == 'sat':
+            # The formula is not good, must be examined and modified.
+            new_form = simplify_temporal(orig_tree, model, prob_vars, selected_vars)
+            return new_form
+        else:
+            raise Exception('Hay problemas con la idea que tenemos.')
+    return formula
+
+def correct_variable(formula, orig_f, v, prob_vars, prob_vars_e, value):
+    positive = False
+    if value:
+        ad = '& G(' + v + ')'
+    else:
+        ad = '& G(!' + v + ')'
+    f = formula + ad
+    aalta_res, model = call_aalta_var_list('expression.dimacs', f)
+    if aalta_res == 'unsat':
+        f1 = orig_f + ad
+        aalta_res, model = call_aalta_var_list('expression.dimacs', f1)
+        if aalta_res == 'sat':
+            if value:
+                prob_vars_e += v + ' & '
+                vv = BVarI(v, True)
+            else:
+                prob_vars_e += '!' + v + ' & '
+                vv = BVarI(v, False)
+            prob_vars.append(vv)
+            positive = True
+    return positive, prob_vars_e
+
+
+def simplify_temporal(orig_tree, model, prob_vars, selected_vars):
+    # Pasar la formula a NNF
+    nnf_tree = __sink_negations(orig_tree)
+    # En teoria seria la original que ya esta en NNF
+    # Dar los valores correspondientes a las variables
+    nnf_tree_substituted = __change_values_tree_temporal(orig_tree, model, prob_vars, selected_vars, 0, False)
+    # Simplificar una vez tienes los valores
+    nnf_nt = __simplify_tree(nnf_tree_substituted)
+    return nnf_nt
+
+def __change_values_tree_temporal(tree, model, prob_vars, sel_vars, s0, alwy):
+    # Changes the values of a temporal expression according to the prob_vars and the sel_vars (selected variables)
+    if not (type(tree) == str):
+        if len(tree) == 2:
+            if tree[0] == 'G':
+                return [tree[0], __change_values_tree_temporal(tree[1], model, prob_vars, sel_vars, s0, True)]
+            elif tree[0] == 'X':
+                s0 += 1
+                return [tree[0], __change_values_tree_temporal(tree[1], model, prob_vars, sel_vars, s0, alwy)]
+            else:
+                # Falta tener en cuenta el eventually
+                return [tree[0], __get_var_value_temporal(tree, model, sel_vars, prob_vars, s0, alwy, False)]
+        elif len(tree) == 3:
+            return [tree[0], __change_values_tree_temporal(tree[1], model, prob_vars, sel_vars, s0, alwy),
+                    __change_values_tree_temporal(tree[2], model, prob_vars, sel_vars, s0, alwy)]
+        else:
+            # No se en que caso se da esto pero por si acaso
+            return [__change_values_tree_temporal(tree[0], model, prob_vars, sel_vars, s0, alwy)]
+    else:
+        # Sel_vars tiene todas las variables que hay que modificar que no son del grupo de descomposicion
+        # En este caso sabes que el valor de tree es True, porque si fuese con una negacion, lo tratarias antes.
+        return __get_var_value_temporal(tree, model, sel_vars, prob_vars, s0, alwy)
+
+
+def __change_value_in(variable, alwy, model, s0, is_sel_var, pos=True, prob_var_value=True):
+    # prob_var_value is True is because: in fi & G(pe) pe is True
+    # prob_var_value is False i.e fi & G(!pe)
+    if alwy:
+        out = False
+        i = 0
+        while not out:
+            state = model[i]
+            next = state[1]
+            if s0 == 0:
+                out = True
+                if is_sel_var:
+                    return __get_var_value_propositional(variable, model)
+                else:
+                    if pos and prob_var_value:
+                        return 'True'
+                    elif not pos and not prob_var_value:
+                        return 'False'
+                    else:
+                        return variable
+            i = next
+            s0 -= 1
+
+
+def __get_var_value_temporal(variable, model, sel_vars, prob_vars, s0, alwy, pos=True):
+    # Pos is False if there is a negation before the variable in the formula
+    if variable in sel_vars:
+        # Dar los valores de la variable correspondiente en el modelo.
+        return __change_value_in(variable, alwy, model, s0, True)
+    else:
+        vv = BVarI(variable, True)
+        # Aqui se podría checkear de alguna manera que fuera una env_var si es cierto que solo tenemos
+        # que checkear las variables del entorno.
+        for bb in prob_vars:
+            if bb == vv:
+                if vv.eq_value(bb):
+                    return __change_value_in(variable, model, s0, False, pos, True)
+                else:
+                    return __change_value_in(variable, model, s0, False, pos, False)
+        return variable
+
+
+def only_sys_and_env(grupo, i_group, env_vars):
+    l = ([], [])
+    for v in i_group:
+        if v in env_vars:
+            l[1].append(v)
+        elif v in grupo:
+            l[0].append(v)
+    return l
+
+
+def manage_groups(var_grups, input_groups, sys_vars, env_vars):
+    relation = []
+    for i, grupo in enumerate(var_grups):
+        for j, i_group in enumerate(input_groups):
+            for v in grupo:
+                if v not in i_group:
+                    break
+            relation.append(only_sys_and_env(grupo, i_group, env_vars))
+            break
+    return relation
+
+
 def flatt_list(l):
     return [item for sublist in l for item in sublist]
 
@@ -383,7 +553,7 @@ def __sink_negations(tree):
             if tree[0] == '!' and type(tree[1]) != 'str':
                 return __profundity(tree[1])
             else:
-                return __sink_negations(tree[1])
+                return [tree[0], __sink_negations(tree[1])]
         elif len(tree) == 3:
             if tree[0] == '->':
                 pre = '|'
@@ -402,36 +572,22 @@ def __sink_negations(tree):
 def __delete_var(tree, variab):
     if not (type(tree) == str):
         if len(tree) == 3:
-            izq = __delete_var_in(tree[1], variab)
-            der = __delete_var_in(tree[2], variab)
+            izq = __delete_var(tree[1], variab)
+            der = __delete_var(tree[2], variab)
             if not izq:
                 return der
             elif not der:
                 return izq
+            elif not der and not izq:
+                return []
             else:
                 return [tree[0], izq, der]
         elif len(tree) == 2:
-            neg = __delete_var_in(tree[1], variab)
+            neg = __delete_var(tree[1], variab)
             if not neg:
                 return []
             else:
-                return tree
-    else:
-        return __delete_var_in(tree, variab)
-
-
-def __delete_var_in(tree, variab):
-    if not (type(tree) == str):
-        if len(tree) == 2:
-            if not (type(tree[1]) == str):
-                return ['!', __delete_var_in(tree[1], variab)]
-            else:
-                if tree[1] == variab:
-                    return []
-                else:
-                    return tree
-        elif len(tree) == 3:
-            return __delete_var(tree, variab)
+                return [tree[0], neg]
         else:
             return tree
     else:
@@ -439,6 +595,26 @@ def __delete_var_in(tree, variab):
             return []
         else:
             return tree
+
+# def __delete_var_in(tree, variab):
+#     if not (type(tree) == str):
+#         if len(tree) == 2:
+#             if not (type(tree[1]) == str):
+#                 return [tree[0], __delete_var_in(tree[1], variab)]
+#             else:
+#                 if tree[1] == variab:
+#                     return []
+#                 else:
+#                     return tree
+#         elif len(tree) == 3:
+#             return __delete_var(tree, variab)
+#         else:
+#             return tree
+#     else:
+#         if tree == variab:
+#             return []
+#         else:
+#             return tree
 
 
 def __profundity(tree):
@@ -636,9 +812,6 @@ def check_is_temporal(var_tree):
         return False
 
 
-
-
-
 def full_process(first, is_nusmv):
     # Gets the formula and calls the main method partition_recursive
     if first:
@@ -660,10 +833,11 @@ def full_process(first, is_nusmv):
                 sys_vars = not_in_v(env_vars, variables)
         else:
             sys_vars = not_in_v(env_vars, variables)
-        var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
-        input_var_groups = partition_general(formula, sys_vars + env_vars, [], True, is_nusmv)
-        manage_groups(var_groups, input_var_groups, sys_vars, env_vars)
-        form_groups2 = get_the_partition2(formula, var_tree, env_vars, sys_vars, var_groups, is_nusmv)
+        envvv_vars = env_vars.copy()
+        var_groups = partition_general(formula, sys_vars, envvv_vars, True, is_nusmv)
+        input_var_groups = partition_general(formula, envvv_vars, [], True, is_nusmv)
+        grupos = manage_groups(var_groups, input_var_groups, sys_vars, env_vars)
+        form_groups2 = get_the_partition2(formula, var_tree, var_groups, grupos, is_nusmv)
         form_groups = []
     else:
         var_groups = partition_general(formula, variables, [], False, is_nusmv)
