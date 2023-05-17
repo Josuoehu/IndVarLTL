@@ -222,7 +222,7 @@ class BVarI(BVar):
             return False
 
     def eq_value(self, o: object):
-        if type(0) == BVarI:
+        if type(o) == BVarI:
             return self.get_value() == o.get_value()
         else:
             raise Exception('Yo are trying to compare two different variable types.')

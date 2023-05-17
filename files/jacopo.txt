@@ -6,4 +6,4 @@ G((a -> X(v & !t))&
 (!(b) -> X(!y))&
 ((b & c) -> X(x))&
 (!b -> X(!x)))
-env_vars:
+env_vars: a, b, c

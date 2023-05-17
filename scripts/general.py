@@ -11,7 +11,7 @@ from req_parser import parse_req_exp
 from classes import BVarI
 from sys import platform
 from os import path
-from scripts.generate import req_to_string
+from generate import req_to_string
 
 
 # from scripts.generate import req_to_string_2, req_to_string
@@ -238,7 +238,7 @@ def terminal_use():
         return "", [], ""
     else:
         if not os.path.exists(args.filename):
-            raise Exception
+            raise Exception("You need to specify correctly the directory of the file.")
         else:
             formula = ""
             e_vars = []
@@ -358,7 +358,8 @@ def get_the_partition2(formula, var_tree, var_groups, grupos, is_nusmv):
             selected_vars = flatt_list(var_groups[:i] + var_groups[i + 1:])
         w_evars = grupos[i]
         f_i = get_new_formula2(var_tree, selected_vars, w_evars)
-        f.append(f_i)
+        ffi = req_to_string(f_i)
+        f.append(ffi)
     return f
 
 
@@ -369,8 +370,8 @@ def get_new_formula2(var_tree, selected_vars, grupo):
     for s in selected_vars:
         var_tree = __delete_var(var_tree, s)
     formula = req_to_string(var_tree)
-    check_if_correct(var_tree, formula, original_formula, orig_tree, selected_vars, grupo)
-    return var_tree
+    final_formula = check_if_correct(var_tree, formula, original_formula, orig_tree, selected_vars, grupo)
+    return final_formula
 
 def check_if_correct(var_tree, formula, orig_f, orig_tree, selected_vars, grupo):
     # Checks if the formula obtained is correct having a parcial formula, the original and the
@@ -425,7 +426,7 @@ def simplify_temporal(orig_tree, model, prob_vars, selected_vars):
     nnf_tree = __sink_negations(orig_tree)
     # En teoria seria la original que ya esta en NNF
     # Dar los valores correspondientes a las variables
-    nnf_tree_substituted = __change_values_tree_temporal(orig_tree, model, prob_vars, selected_vars, 0, False)
+    nnf_tree_substituted = __change_values_tree_temporal(nnf_tree, model, prob_vars, selected_vars, 0, False)
     # Simplificar una vez tienes los valores
     nnf_nt = __simplify_tree(nnf_tree_substituted)
     return nnf_nt
@@ -441,7 +442,7 @@ def __change_values_tree_temporal(tree, model, prob_vars, sel_vars, s0, alwy):
                 return [tree[0], __change_values_tree_temporal(tree[1], model, prob_vars, sel_vars, s0, alwy)]
             else:
                 # Falta tener en cuenta el eventually
-                return [tree[0], __get_var_value_temporal(tree, model, sel_vars, prob_vars, s0, alwy, False)]
+                return [tree[0], __get_var_value_temporal(tree[1], model, sel_vars, prob_vars, s0, alwy, False)]
         elif len(tree) == 3:
             return [tree[0], __change_values_tree_temporal(tree[1], model, prob_vars, sel_vars, s0, alwy),
                     __change_values_tree_temporal(tree[2], model, prob_vars, sel_vars, s0, alwy)]
@@ -466,7 +467,7 @@ def __change_value_in(variable, alwy, model, s0, is_sel_var, pos=True, prob_var_
             if s0 == 0:
                 out = True
                 if is_sel_var:
-                    return __get_var_value_propositional(variable, model)
+                    return __get_var_value_propositional(variable, model[i][0])
                 else:
                     if pos and prob_var_value:
                         return 'True'
@@ -490,9 +491,9 @@ def __get_var_value_temporal(variable, model, sel_vars, prob_vars, s0, alwy, pos
         for bb in prob_vars:
             if bb == vv:
                 if vv.eq_value(bb):
-                    return __change_value_in(variable, model, s0, False, pos, True)
+                    return __change_value_in(variable, alwy, model, s0, False, pos, True)
                 else:
-                    return __change_value_in(variable, model, s0, False, pos, False)
+                    return __change_value_in(variable, alwy, model, s0, False, pos, False)
         return variable
 
 
@@ -837,8 +838,8 @@ def full_process(first, is_nusmv):
         var_groups = partition_general(formula, sys_vars, envvv_vars, True, is_nusmv)
         input_var_groups = partition_general(formula, envvv_vars, [], True, is_nusmv)
         grupos = manage_groups(var_groups, input_var_groups, sys_vars, env_vars)
-        form_groups2 = get_the_partition2(formula, var_tree, var_groups, grupos, is_nusmv)
-        form_groups = []
+        form_groups = get_the_partition2(formula, var_tree, var_groups, grupos, is_nusmv)
+        # form_groups = []
     else:
         var_groups = partition_general(formula, variables, [], False, is_nusmv)
         form_groups = get_the_partition(formula, var_tree, variables, var_groups, is_nusmv)
