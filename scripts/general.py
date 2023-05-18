@@ -425,10 +425,13 @@ def simplify_temporal(orig_tree, model, prob_vars, selected_vars):
     # Pasar la formula a NNF
     nnf_tree = __sink_negations(orig_tree)
     # En teoria seria la original que ya esta en NNF
+    print(req_to_string(nnf_tree))
     # Dar los valores correspondientes a las variables
     nnf_tree_substituted = __change_values_tree_temporal(nnf_tree, model, prob_vars, selected_vars, 0, False)
+    print(req_to_string(nnf_tree_substituted))
     # Simplificar una vez tienes los valores
-    nnf_nt = __simplify_tree(nnf_tree_substituted)
+    # nnf_nt = __simplify_tree(nnf_tree_substituted)
+    nnf_nt = __s_tree(nnf_tree_substituted)
     return nnf_nt
 
 def __change_values_tree_temporal(tree, model, prob_vars, sel_vars, s0, alwy):
@@ -687,6 +690,11 @@ def __simplify_tree(tree):
                 return 'False'
             elif tree[1] == 'False':
                 return 'True'
+            elif tree[0] == 'X':
+                if tree[1] == 'True' or tree[1] == 'False':
+                    return tree[1]
+                else:
+                    return 'X(' + __simplify_tree(tree[1]) + ')'
             else:
                 return tree[0] + '(' + __simplify_tree(tree[1]) + ')'
         elif len(tree) == 3:
@@ -762,6 +770,56 @@ def __simplify_tree(tree):
         else:
             return tree[0]
     else:
+        return tree
+
+def __s_tree(tree):
+    if type(tree) == str:
+        return tree
+    else:
+        if len(tree) == 2:
+            treecero = tree[0]
+            treeuno = __s_tree(tree[1])
+            if treecero == 'X':
+                if treeuno == 'True' or treeuno == 'False':
+                    return treeuno
+            elif treecero == '!':
+                if treeuno == 'True':
+                    return 'False'
+                elif treeuno == 'False':
+                    return 'True'
+            return [treecero, treeuno]
+        elif len(tree) == 3:
+            treecero = tree[0]
+            izq = __s_tree(tree[1])
+            der = __s_tree(tree[2])
+            if treecero == '&':
+                if izq == 'True':
+                    return der
+                elif izq == 'False':
+                    return 'False'
+                else:
+                    if der == 'True':
+                        return izq
+                    elif der == 'False':
+                        return 'False'
+                    else:
+                        return [treecero, izq, der]
+            elif treecero == '|':
+                if izq == 'True':
+                    return 'True'
+                elif izq == 'False':
+                    return der
+                else:
+                    if der == 'False':
+                        return izq
+                    elif der == 'True':
+                        return 'True'
+                    else:
+                        return [treecero, izq, der]
+            elif treecero == '->':
+                return __s_tree(['|', ['!', tree[1]], tree[2]])
+            else:
+                raise Exception('Operador que no existe')
         return tree
 
 
