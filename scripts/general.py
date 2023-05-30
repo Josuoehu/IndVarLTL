@@ -895,6 +895,7 @@ def full_process(first, is_nusmv):
         envvv_vars = env_vars.copy()
         var_groups = partition_general(formula, sys_vars, envvv_vars, True, is_nusmv)
         input_var_groups = partition_general(formula, envvv_vars, [], True, is_nusmv)
+        print(input_var_groups)
         grupos = manage_groups(var_groups, input_var_groups, sys_vars, env_vars)
         form_groups = get_the_partition2(formula, var_tree, var_groups, grupos, is_nusmv)
         # form_groups = []

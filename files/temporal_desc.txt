@@ -1,2 +1,2 @@
-G((pe -> X(X(!c & a))) & ((!pe) -> X(c)))
+F((pe -> X(X(a)))) & X(c)
 env_vars: pe

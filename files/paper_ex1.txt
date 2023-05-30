@@ -1,0 +1,2 @@
+G(p -> (a | (b & c))) & F(p -> (d | e)) & F(!p -> !e)
+env_vars: p
