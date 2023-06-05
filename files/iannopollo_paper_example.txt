@@ -1,0 +1,16 @@
+(((!gl & G(gl -> X(gl))) &
+(!gr & G(gr -> X(gr))) &
+(!al & G(al -> X(al))) &
+(!ar & G(ar -> X(ar))) &
+(!rl & G(rl -> X(rl))) &
+(!rr & G(rr -> X(rr)))) ->
+((c1 & G(gl -> X(!c1))) &
+(c4 & G(gr -> X(!c4))) &
+G(al -> X(!c2)) &
+G(ar -> X(!c3)) &
+G(!(c2 & c3)) &
+G((!gl & !gr) -> F(!(c5 & c6))) &
+G((!gl & !al & !ar & !gr) -> F(!c2 & !c3 & !c5 & !c6)) &
+G(!(rl & rr) -> c9) &
+G(!(rl & rr) -> c10)))
+env_vars: gl, gr, al, ar, rl, rr
