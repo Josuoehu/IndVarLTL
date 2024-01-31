@@ -287,24 +287,31 @@ def create_bash_file(path, is_nusmv):
 def get_app_path(is_linux, is_nusmv):
     # Given if the system is Linux or not (MacOS) gets the path of NuSMV in the computer
     call_get_path(is_linux, is_nusmv)
-    f = open("../files/allpaths.txt")
-    line = f.readline()
-    if line[-1] == '\n':
-        line = line[:-1]
-    os.remove("../files/allpaths.txt")
-    return line
+    try:
+        f = open("../files/allpaths.txt")
+        line = f.readline()
+        if line[-1] == '\n':
+            line = line[:-1]
+        os.remove("../files/allpaths.txt")
+    except Exception:
+        return ""
+    else:
+        return line
 
 
 def checker_path(is_linux, is_nusmv):
     # Gets the path and creates the bash file for NuSMV or Aalta
     path = get_app_path(is_linux, is_nusmv)
-    create_bash_file(path, is_nusmv)
+    if path:
+        create_bash_file(path, is_nusmv)
+
 
 
 def pregunta_path(is_linux, is_nusmv):
     # Questions to start the app
     print("Looking for the path...")
     checker_path(is_linux, is_nusmv)
+
 
 
 def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
@@ -611,7 +618,12 @@ def main():
         else:
             quit("\nSee you next time!")
 
-    main_in(True, program_name, is_nusmv)
+    if path.isfile("./call_nusmv.sh") or path.isfile("./call_aalta.sh"):
+        main_in(True, program_name, is_nusmv)
+    else:
+        print("A problem has been found. Please check that you have NuSMV or Aalta installed"
+              ".\nIn case you have alredy instaled you can contact the developers by email:"
+              " \"josu.oca@udg.edu\".")
 
 def prueba():
     expresion = '(a | ((b & c) & (c | d)))'
