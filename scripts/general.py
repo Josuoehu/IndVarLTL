@@ -473,7 +473,7 @@ def ask_for_env(variables, res):
     evars = extract_env_vars(res)
     for v in evars:
         if v not in variables:
-            print("The variable " + v + "does not exist in the formula. Try again or leave the process typing "
+            print("The variable " + v + " does not exist in the formula. Try again or leave the process typing "
                                         "\"quit\":\n")
             r = input()
             r = r.replace(" ", "")
