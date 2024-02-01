@@ -483,7 +483,7 @@ def ask_for_env(variables, res):
                 return ask_for_env(variables, r)
     return evars
 
-
+# G((p -> X(v & !(t))) & (! p -> X(!(v) & t)) & (v -> X(!(w) & u)) & (!(v) -> X(w & !(u))))
 def extract_env_vars(res):
     res_a = res.replace(" ", "")
     evars = res_a.split(",")
