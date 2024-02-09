@@ -216,7 +216,7 @@ def ob_vars(cs, treated):
 
 def __env_process(l):
     vars = l.lower().split(":")
-    print(str(vars) + " Split interior.")
+    # print(str(vars) + " Split interior.")
     if vars[0] == "env_vars":
         return extract_env_vars(vars[1])
     else:
@@ -229,7 +229,7 @@ def terminal_use():
     parser.add_argument("-f", dest="filename", help="Input the file with the logical expression", 
                         metavar="FILE")
     args = parser.parse_args()
-    print("Entra aquí")
+    # print("Entra aquí")
     if not args.filename:
         return "", [], ""
     else:
@@ -251,7 +251,7 @@ def terminal_use():
                     if not e_vars:
                         formula += str(line)
             file.close()
-            print("No hay variables de entorno" + str(e_vars))
+            # print("No hay variables de entorno" + str(e_vars))
             return formula, e_vars, args.filename
 
 
@@ -515,7 +515,7 @@ def full_process(first, is_nusmv):
     # Gets the formula and calls the main method partition_recursive
     if first:
         formula, env_vars, file_name = __get_formula()
-        print(file_name)
+        # print(file_name)
     else:
         formula = no_file_terminal()
         env_vars = []
@@ -532,13 +532,15 @@ def full_process(first, is_nusmv):
                 sys_vars = not_in_v(env_vars, variables)
         else:
             sys_vars = not_in_v(env_vars, variables)
+        print("Asking the question...")
+        time.sleep(1)
         var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
         form_groups = []
     else:
+        print("Asking the question...")
+        time.sleep(1)
         var_groups = partition_general(formula, variables, [], False, is_nusmv)
         form_groups = get_the_partition(formula, var_tree, variables, var_groups, is_nusmv)
-        print("\nAsking the question...")
-        time.sleep(3)
     return var_groups, form_groups, file_name
 
 
@@ -583,7 +585,7 @@ def main_in(first, program_name, is_nusmv):
     print("\nThe Groups of the decomposition are:\n" + str(var_groups))
     print("The result of the decomposition is:\n" + str(form_groups))
     if file_name != "":
-        print("Entra en el if the creacion de fichero.")
+        # print("Entra en el if the creacion de fichero.")
         output_file(var_groups, form_groups, file_name)
     time.sleep(1)
     print("\nWill you continue using " + program_name + "?\nType 1 if so, anything else if not.")
@@ -595,8 +597,8 @@ def main_in(first, program_name, is_nusmv):
 
 
 def main():
-    program_name = "Decomposition"
-    print("Welcome to " + program_name + " app.")
+    program_name = "IndVarLTL"
+    print("Welcome to " + program_name + " Tool.")
     is_nusmv = True
     os = get_so()
     if os == "windows":
