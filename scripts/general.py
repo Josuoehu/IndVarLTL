@@ -624,7 +624,7 @@ def main():
         main_in(True, program_name, is_nusmv)
     else:
         print("A problem has been found. Please check that you have NuSMV or Aalta installed"
-              ".\nIn case you have alredy instaled you can contact the developers by email:"
+              ".\nIn case you have alredy installed you can contact the developers by email:"
               " \"josu.oca@udg.edu\".")
 
 def prueba():
