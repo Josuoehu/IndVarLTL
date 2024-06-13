@@ -565,7 +565,7 @@ def output_file(v_g, f_g, name):
     out_file.write("The variables are decomposed in the following groups: ")
     __print_variables(out_file, v_g)
     if not f_g:
-        out_file.write("Formula decomposition for LTL functionality is not available yet, coming soon")
+        out_file.write("Formula decomposition for LTL functionality is not available yet, coming soon...")
     else:
         out_file.write("The formulas are decomposed the following way: ")
         __print_variables(out_file, f_g)
@@ -582,8 +582,8 @@ def __print_variables(out_file, v_g):
 
 def main_in(first, program_name, is_nusmv):
     var_groups, form_groups, file_name = full_process(first, is_nusmv)
-    print("\nThe Groups of the decomposition are:\n" + str(var_groups))
-    print("The result of the decomposition is:\n" + str(form_groups))
+    print("\nThe variable decomposition is:\n" + str(var_groups))
+    print("The formula decomposition is:\n" + str(form_groups))
     if file_name != "":
         # print("Entra en el if the creacion de fichero.")
         output_file(var_groups, form_groups, file_name)
