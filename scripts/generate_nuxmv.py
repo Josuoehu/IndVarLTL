@@ -3,7 +3,6 @@ import os
 from parser import *
 from req_parser import is_var_in_tree
 from generate import req_to_string
-from overlapping import check_overlapping
 
 
 def create_document(name, first):

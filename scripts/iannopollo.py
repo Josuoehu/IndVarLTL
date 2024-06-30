@@ -27,13 +27,13 @@ def alg_iannopollo(env_vars, sys_vars, init_env, init_sys, ass, gua):
                         left_f = isolate_vars(ncv, i)
                         calling_exp = "((" + left_f + ") & " + right_f[1:]
                         call_nusmv("nuxmv_file.smv", calling_exp, "counterexample")
-                        if os.path.exists("../data/counterexample.xml"):
+                        if os.path.exists("../counterexample.xml"):
                             contraejemplo = True
                             manage_counterexample_nusmv(env_vars, cv, treated)
                             break
                     if not contraejemplo:
                         call_nusmv("nuxmv_file.smv", right_f, "counterexample")
-                        if os.path.exists("../data/counterexample.xml"):
+                        if os.path.exists("../counterexample.xml"):
                             manage_counterexample_nusmv(env_vars, cv, treated)
                         else:
                             passed = True
@@ -52,7 +52,7 @@ def alg_ainnopollo_nleft(env_vars, sys_vars, init_env, init_sys, ass, gua):
             ncs = not_in_v(cs, sys_vars)
             fi = refine_formula(ass, gua, init_env, init_sys, cs, ncs, True)
             call_nusmv("nuxmv_file.smv", fi, "counterexample")
-            if os.path.exists("../data/counterexample.xml"):
+            if os.path.exists("../counterexample.xml"):
                 changing_vars = obtain_vars(env_vars, cs, treated)
                 look_for_dependent_variables(cs, fi, changing_vars, env_vars, treated, sys_vars, ass, gua, init_env,
                                              init_sys)
@@ -92,11 +92,11 @@ def call_full_aalta(file_name, fi, cv, treated):
     ruta = '../files/' + file_name
     create_file(ruta, fi)
     call_aalta(file_name, 'result.txt')
-    aalta_res, model = parse_aalta('../data/result.txt')
+    aalta_res, model = parse_aalta('../result.txt')
     model = list(set(model))
     l4 = not_in_v(cv, model)
     l5 = not_in_v(treated, l4)
-    os.remove('../data/result.txt')
+    os.remove('../result.txt')
     os.remove('../files/expression.dimacs')
     return aalta_res, l5
 
@@ -105,8 +105,8 @@ def call_aalta_var_list(file_name, fi):
     ruta = '../files/' + file_name
     create_file(ruta, fi)
     call_aalta(file_name, 'result.txt')
-    aalta_res, model = parse_aalta_var_list('../data/result.txt')
-    os.remove('../data/result.txt')
+    aalta_res, model = parse_aalta_var_list('../result.txt')
+    os.remove('../result.txt')
     os.remove('../files/expression.dimacs')
     return aalta_res, model
 
@@ -117,7 +117,7 @@ def look_for_dependent_variables(cs, fi, chang_vars, env_vars, treated, sys_vars
     inv = " | F(" + z + " != " + z + "_)"
     nfi = fi + inv
     call_nusmv("nuxmv_file.smv", nfi, "counterexample")
-    if os.path.exists("../data/counterexample.xml"):
+    if os.path.exists("../counterexample.xml"):
         changing_vars = obtain_vars(env_vars, cs, treated)
         return look_for_dependent_variables(cs, nfi, changing_vars, env_vars, treated, sys_vars, ass, gua, init_env,
                                             init_sys)
@@ -128,7 +128,7 @@ def look_for_dependent_variables(cs, fi, chang_vars, env_vars, treated, sys_vars
         if ncs:
             fffi = refine_formula(ass, gua, init_env, init_sys, cs, ncs, True)
             call_nusmv("nuxmv_file.smv", fffi, "counterexample")
-            if os.path.exists("../data/counterexample.xml"):
+            if os.path.exists("../counterexample.xml"):
                 changing_vars = obtain_vars(env_vars, cs, treated)
                 return look_for_dependent_variables(cs, fffi, changing_vars, env_vars, treated, sys_vars, ass, gua,
                                                     init_env, init_sys)
@@ -170,8 +170,8 @@ def look_for_dependent_variables_aalta(cs, fi, chang_vars, env_vars, treated, sy
 
 
 def manage_counterexample_nusmv(var, cv, treated):
-    counterex = parse_xml("../data/counterexample.xml")
-    os.remove("../data/counterexample.xml")
+    counterex = parse_xml("../counterexample.xml")
+    os.remove("../counterexample.xml")
     dvars = list(set(not_same_var(counterex)))
     l3 = [x for x in dvars if x not in var]
     l4 = not_in_v(cv, l3)
@@ -181,8 +181,8 @@ def manage_counterexample_nusmv(var, cv, treated):
 
 
 def obtain_vars(var, cv, treated):
-    counterex = parse_xml("../data/counterexample.xml")
-    os.remove("../data/counterexample.xml")
+    counterex = parse_xml("../counterexample.xml")
+    os.remove("../counterexample.xml")
     dvars = list(set(not_same_var(counterex)))
     l3 = [x for x in dvars if x not in var]
     l4 = not_in_v(cv, l3)

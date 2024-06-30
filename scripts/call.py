@@ -14,14 +14,14 @@ def call_get_path(is_linux, is_nusmv):
 
 
 def call_nusmv_bounded(script, expression, out_name, bound):
-    command = '\'go_bmc;check_ltlspec_bmc -p \"' + expression + '\" -k ' + str(bound) + '; show_traces -p 4 -o ../data/' + out_name\
+    command = '\'go_bmc;check_ltlspec_bmc -p \"' + expression + '\" -k ' + str(bound) + '; show_traces -p 4 -o ../' + out_name\
               + '.xml;quit\''
     calling = './call_nusmv.sh ' + command + ' ' + script
     os.system(calling)
 
 
 def call_nusmv(script, expression, out_name):
-    command = '\'go;check_ltlspec -p \"' + expression + '\"; show_traces -p 4 -o ../data/' + out_name\
+    command = '\'go;check_ltlspec -p \"' + expression + '\"; show_traces -p 4 -o ../' + out_name\
               + '.xml;quit\''
     calling = './call_nusmv.sh ' + command + ' ' + script
     os.system(calling)
@@ -29,7 +29,7 @@ def call_nusmv(script, expression, out_name):
 
 def call_aalta(input_file, out_name):
     command = '../files/' + input_file
-    calling = './call_aalta.sh ' + command + ' ../data/result.txt'
+    calling = './call_aalta.sh ' + command + ' ../result.txt'
     os.system(calling)
 
 

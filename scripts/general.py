@@ -8,7 +8,6 @@ from generate_nuxmv import create_nusmv_file
 from iannopollo import not_in_v, renaming, call_full_aalta, call_aalta_var_list
 from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
-from classes import BVarI
 from sys import platform
 from os import path
 
@@ -35,7 +34,7 @@ def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
     inv = " | !(" + z + " <-> " + z + "_)"
     newfi = oldfi + inv
     call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-    if os.path.exists("../data/counterexample.xml"):
+    if os.path.exists("../counterexample.xml"):
         new_changing_vars = ob_vars(cs, treated)
         return look_for_dep_var(fi, newfi, new_changing_vars, cs, treated, cv)
     else:
@@ -45,7 +44,7 @@ def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
         if ncs:
             other_fi = generate_exp(fi, cs, ncs, True)
             call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
-            if os.path.exists("../data/counterexample.xml"):
+            if os.path.exists("../counterexample.xml"):
                 changing_vars = ob_vars(cs, treated)
                 return look_for_dep_var(fi, other_fi, changing_vars, cs, treated, cv)
             else:
@@ -96,7 +95,7 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, 
             inv = " | !(" + z + " <-> " + z + "_)"
         newfi += inv
         call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-        if os.path.exists("../data/counterexample.xml"):
+        if os.path.exists("../counterexample.xml"):
             new_changing_vars = ob_vars(cs, treated)
             changing_vars = new_changing_vars
         else:
@@ -108,7 +107,7 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, 
     if ncs:
         other_fi = generate_exp(fi, cs, ncs, True)
         call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
-        if os.path.exists("../data/counterexample.xml"):
+        if os.path.exists("../counterexample.xml"):
             changing_vars = ob_vars(cs, treated)
             return look_for_dep_var_while(fi, other_fi, changing_vars, cs, treated, cv, True, is_temporal)
         else:
@@ -129,7 +128,7 @@ def partition(fi, cv):
             if ncs:
                 newfi = generate_exp(fi, cs, ncs, True)
                 call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-                if os.path.exists("../data/counterexample.xml"):
+                if os.path.exists("../counterexample.xml"):
                     changing_vars = ob_vars(cs, treated)
                     cs = look_for_dep_var(fi, newfi, changing_vars, cs, treated, cv)
                 cv = not_in_v(cs, cv)
@@ -177,7 +176,7 @@ def partition_recursive(fi, cv, treated, is_temporal):
         ncs = not_in_v(cs, cv)
         newfi = generate_exp(fi, cs, ncs, True)
         call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-        if os.path.exists("../data/counterexample.xml"):
+        if os.path.exists("../counterexample.xml"):
             changing_vars = ob_vars(cs, treated)
             cs = look_for_dep_var_while(fi, newfi, changing_vars, cs, treated, cv, True, is_temporal)
         cv = not_in_v(cs, cv)
@@ -205,8 +204,8 @@ def var_list_exp(exp):
 
 
 def ob_vars(cs, treated):
-    counterex = parse_xml("../data/counterexample.xml")
-    os.remove("../data/counterexample.xml")
+    counterex = parse_xml("../counterexample.xml")
+    os.remove("../counterexample.xml")
     # No se si aquí es necesario list(set())
     dvars = list(set(not_same_var(counterex)))
     l3 = not_in_v(cs, dvars)
@@ -325,9 +324,9 @@ def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
     if is_nusmv:
         create_nusmv_file(variables, [])
         call_nusmv("nuxmv_file.smv", '!(' + formula + ')', "counterexample")
-        if os.path.exists("../data/counterexample.xml"):
-            counterex = parse_xml("../data/counterexample.xml")
-            os.remove("../data/counterexample.xml")
+        if os.path.exists("../counterexample.xml"):
+            counterex = parse_xml("../counterexample.xml")
+            os.remove("../counterexample.xml")
             # Accedo al primer elemento de la lista compuesta por nodos, y luego a las variables normales
             model = counterex[0][0]
             os.remove("../smv/nuxmv_file.smv")
@@ -626,22 +625,6 @@ def main():
         print("A problem has been found. Please check that you have NuSMV or Aalta installed"
               ".\nIn case you have alredy installed you can contact the developers by email:"
               " \"josu.oca@udg.edu\".")
-
-def prueba():
-    expresion = '(a | ((b & c) & (c | d)))'
-    v1 = BVarI('a', False)
-    v2 = BVarI('b', True)
-    v3 = BVarI('c', True)
-    v4 = BVarI('d', False)
-    model = [v1, v2, v3, v4]
-    t = parse_req_exp(expresion, 'prop')
-    sel = ['c']
-    nt = __change_values_tree(t, model, sel)
-    print(nt)
-    ntt = __simplify_tree(nt)
-    print(ntt)
-
-
 
 
 if __name__ == '__main__':
