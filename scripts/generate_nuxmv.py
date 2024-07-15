@@ -8,7 +8,7 @@ from generate import req_to_string
 def create_document(name, first):
     # Creates a document in order to write on it
     try:
-        name = '../smv/' + name + '.smv'
+        name = name + '.smv'
         file = open(name, "a")
         if first:
             file.write("MODULE main \n \n")

@@ -180,7 +180,7 @@ def partition_recursive(fi, cv, treated, is_temporal):
             changing_vars = ob_vars(cs, treated)
             cs = look_for_dep_var_while(fi, newfi, changing_vars, cs, treated, cv, True, is_temporal)
         cv = not_in_v(cs, cv)
-        os.remove("../smv/nuxmv_file.smv")
+        os.remove("nuxmv_file.smv")
         return [cs] + partition_recursive(fi, cv, treated, is_temporal)
 
 
@@ -273,12 +273,12 @@ def create_bash_file(path, is_nusmv):
     # Create the NuSMV bash file to call it given the path
     if is_nusmv:
         f = open("call_nusmv.sh", "w")
-        f.write("#!/bin/bash\n\n" + str(path) + " -int ../smv/$2 <<< $1")
+        f.write("#!/bin/bash\n\n" + str(path) + " -int $2 <<< $1")
         f.close()
         os.chmod("./call_nusmv.sh", stat.S_IRWXU)
     else:
         f = open("call_aalta.sh", "w")
-        f.write("#!/bin/bash\n\ncat $1 | " + str(path) + " -e > ../smv/$2")
+        f.write("#!/bin/bash\n\ncat $1 | " + str(path) + " -e > $2")
         f.close()
         os.chmod("./call_aalta.sh", stat.S_IRWXU)
 
@@ -329,7 +329,7 @@ def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
             os.remove("../counterexample.xml")
             # Accedo al primer elemento de la lista compuesta por nodos, y luego a las variables normales
             model = counterex[0][0]
-            os.remove("../smv/nuxmv_file.smv")
+            os.remove("nuxmv_file.smv")
         else:
             quit('It does not exist a model for the formula.')
     else:
