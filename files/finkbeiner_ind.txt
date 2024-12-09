@@ -10,8 +10,7 @@ out2&
 out3&
 out5&
 !internal1)&
-G(((out1 -> X(in4))&
-(in6 -> X(X(!in3)))&
+G(((in6 -> X(X(!in3)))&
 ((in3 & in7) -> X(X(!in2)))&
 (in7 -> X(in1)))->
 (((in1 & in5) -> X(out1 & out2)) &

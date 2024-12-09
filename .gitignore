@@ -1,0 +1,4 @@
+venv
+scripts/call_aalta.sh
+scripts/call_nusmv.sh
+scripts/__pycache__/*

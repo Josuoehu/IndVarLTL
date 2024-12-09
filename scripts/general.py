@@ -5,7 +5,7 @@ import time
 
 from call import call_nusmv, call_get_path
 from generate_nuxmv import create_nusmv_file
-from iannopollo import not_in_v, renaming, call_full_aalta, call_aalta_var_list
+from alg_paper import not_in_v, renaming, call_full_aalta, call_aalta_var_list
 from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
 from sys import platform

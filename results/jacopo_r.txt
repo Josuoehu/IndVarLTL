@@ -1,4 +1,4 @@
 Results of the Decomposition of jacopo.txt file.
 
 The variables are decomposed in the following groups: ['v', 'z', 'w', 'y'], ['t'], ['x']
-Formula decomposition for LTL functionality is not available yet, coming soon
+Formula decomposition for LTL functionality is not available yet, coming soon...

@@ -1,0 +1,4 @@
+Results of the Decomposition of finkbeiner_ind.txt file.
+
+The variables are decomposed in the following groups: ['out1'], ['out2'], ['out3', 'internal1', 'out5']
+Formula decomposition for LTL functionality is not available yet, coming soon...
