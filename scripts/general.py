@@ -12,8 +12,27 @@ from sys import platform
 from os import path
 
 
-# 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
 def generate_exp(fi, cs, ncs, is_nusmv):
+    """
+    This function generates the formula to ask the checker or the SAT Tool.
+
+    Parameters
+    ----------
+
+    fi : str
+        Initial formula.
+    cs : list
+        Variables in one group which after must be renamed.
+    ncs : list
+        Complementary group of variables.
+    is_nusmv : bool
+        If the expression is generated for NuSMV or for Aalta. (A model checker or a SAT solver).
+
+    Returns
+    -------
+    str
+        The original formula renamed with the corresponding variables.
+    """
     fi_cs = fi
     fi_not_cs = fi
     for v in cs:
@@ -22,10 +41,12 @@ def generate_exp(fi, cs, ncs, is_nusmv):
         fi_not_cs = renaming(fi_not_cs, v, "_")
     if is_nusmv:
         # !fi_cs || !fi_ncs || fi
-        return "!(" + fi_cs + ") | !(" + fi_not_cs + ") | (" + fi + ")"
+        # return "!(" + fi_cs + ") | !(" + fi_not_cs + ") | (" + fi + ")"
+        return f"!({fi_cs}) | !({fi_not_cs}) | ({fi})"
     else:
         # fi_cs && fi_ncs && !fi
-        return "(" + fi_cs + ") & (" + fi_not_cs + ") & !(" + fi + ")"
+        # return "(" + fi_cs + ") & (" + fi_not_cs + ") & !(" + fi + ")"
+        return f"({fi_cs}) & ({fi_not_cs}) & !({fi})"
 
 
 def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
