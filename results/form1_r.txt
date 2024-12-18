@@ -1,0 +1,4 @@
+Results of the Decomposition of form1.txt file.
+
+The variables are decomposed in the following groups: ['a'], ['b'], ['c'], ['d']
+Formula decomposition for LTL functionality is not available yet, coming soon...

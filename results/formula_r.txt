@@ -1,0 +1,4 @@
+Results of the Decomposition of formula.txt file.
+
+The variables are decomposed in the following groups: ['v', 'u', 'w'], ['t']
+Formula decomposition for LTL functionality is not available yet, coming soon

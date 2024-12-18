@@ -1,0 +1,11 @@
+MODULE main 
+ 
+VAR 
+ 
+o: boolean;
+i: boolean;
+
+FAIRNESS TRUE
+
+LTLSPEC
+  !(!o & X(!o) & G(X(X(o)) <-> i)) & !i
