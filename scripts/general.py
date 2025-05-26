@@ -218,6 +218,26 @@ def __var_list_from_tree(exp):
     else:
         return [exp]
 
+# def __var_list_from_tree(exp):
+#     vars_set = set()
+#
+#     operadores = {'!', '~', '&', '&&', '|', '||', '->', '<->', 'X', 'F', 'G'}
+#
+#     def helper(node):
+#         if isinstance(node, str):
+#             # Cadena no vacía y no operador, es variable
+#             if node and node not in operadores:
+#                 vars_set.add(node)
+#         elif isinstance(node, (list, tuple)):
+#             for child in node:
+#                 # Ignorar cadenas vacías o None
+#                 if child not in ('', None):
+#                     helper(child)
+#
+#     helper(exp)
+#     return sorted(vars_set)
+#
+
 
 def var_list_exp(exp):
     l = __var_list_from_tree(exp)

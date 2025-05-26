@@ -1,2 +1,0 @@
-G((p -> X(v & !t)) & (!p -> X(!v & t)) & (v -> X(!w & u)) & (!v -> X(w & !u)))
-env_vars: p

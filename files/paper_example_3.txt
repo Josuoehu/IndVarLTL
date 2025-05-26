@@ -1,0 +1,4 @@
+(!f & G(f -> X(f))) ->
+(c & G(X(f) -> X(!c)) &
+G(!f -> c))
+env_vars: f
