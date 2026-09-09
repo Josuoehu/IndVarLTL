@@ -1,0 +1,2 @@
+G((p -> X(t | v)) & (!p -> X(w | x)))
+env_vars:p

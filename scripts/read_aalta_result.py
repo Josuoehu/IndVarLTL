@@ -1,99 +1,77 @@
 from classes import BVarI
 
 
+def _read_result(file_path):
+    with open(file_path, 'r') as result_file:
+        lines = [line.strip() for line in result_file if line.strip()]
+
+    for line in lines:
+        if line == 'unsat':
+            return 'unsat', lines
+        if line == 'sat':
+            return 'sat', lines
+    raise ValueError(f"Aalta output does not contain a satisfiability result: {file_path}")
+
+
 def parse_aalta(file_text):
-    file = open(file_text, 'r')
-    distintic_vars = []
-    fin = True
-    i = 0
-    while fin:
-        line = file.readline()
-        if not line:
-            fin = False
-        else:
-            if i == 1:
-                if line[:-1] == 'unsat':
-                    return 'unsat', []
-            elif i > 1:
-                var_s = treat_line(line)
-                if var_s:
-                    distintic_vars.extend(var_s)
-        i += 1
-    return 'sat', distintic_vars
+    status, lines = _read_result(file_text)
+    if status == 'unsat':
+        return status, []
+
+    distinct_vars = []
+    for line in lines:
+        distinct_vars.extend(treat_line(line))
+    return status, distinct_vars
+
 
 def parse_aalta_var_list(file_text):
-    file = open(file_text, 'r')
-    distintic_vars = []
-    fin = True
-    i = 0
-    while fin:
-        line = file.readline()
-        if not line:
-            fin = False
-        else:
-            if i == 1:
-                if line[:-1] == 'unsat':
-                    return 'unsat', []
-            elif i > 1:
-                if line[0] != "(":
-                    var_list = all_line_values(line)
-                    return 'sat', var_list
-            i+=1
+    status, lines = _read_result(file_text)
+    if status == 'unsat':
+        return status, []
+
+    for line in lines:
+        if line.startswith('{'):
+            return status, all_line_values(line)
+    return status, []
+
+
+def _tokens(line):
+    text = line.strip()
+    if not (text.startswith('{') and text.endswith('}')):
+        return []
+    return [token.strip() for token in text[1:-1].split(',') if token.strip()]
 
 
 def treat_line(line):
-    if line[0] == '{':
-        l = line[1:-3]
-        variables = l.split(sep=',')
-        v_list = n_same_vars(variables)
-        return v_list
-    else:
-        return []
+    return n_same_vars(_tokens(line))
 
 
 def all_line_values(line):
-    if line[0] == '{':
-        l = line[1:-3]
-        variables = l.split(sep=',')
-        var_list = [know_false_name(v) for v in variables]
-        return var_list
-    else:
-        return []
+    return [know_false_name(value) for value in _tokens(line)]
 
 
 def n_same_vars(variables):
-    ret = []
-    for i in range(len(variables)):
-        var1 = variables[i]
-        v1 = know_false_name(var1)
-        v1_name = v1.get_name()
-        b2 = True
-        j = i+1
-        while j < len(variables) and b2:
-            var2 = variables[j]
-            v2 = know_false_name(var2)
-            v2_name = v2.get_name()
-            if v1.get_value() != v2.get_value():
-                if v1_name == v2_name[:-1]:
-                    ret.append(v1_name)
-                elif v2_name == v1_name[:-1]:
-                    ret.append(v2_name)
-            else:
-                if v1_name == v2_name[:-1] or v2_name == v1_name[:-1]:
-                    b2 = False
-            j += 1
-    return ret
+    result = []
+    parsed = [know_false_name(variable) for variable in variables]
+    for index, first in enumerate(parsed):
+        for second in parsed[index + 1:]:
+            first_name = first.get_name()
+            second_name = second.get_name()
+            same_base = (
+                first_name == second_name + '_'
+                or second_name == first_name + '_'
+            )
+            if same_base and first.get_value() != second.get_value():
+                base_name = first_name[:-1] if first_name.endswith('_') else first_name
+                if base_name not in result:
+                    result.append(base_name)
+    return result
 
 
-def know_false_name(v):
-    if v[0] == '(':
-        v_name = v[3:-1]
-        v1 = BVarI(v_name, False)
-    else:
-        v1 = BVarI(v, True)
-    return v1
-
-
-
-
-
+def know_false_name(value):
+    token = value.strip()
+    if token.startswith('(!') and token.endswith(')'):
+        return BVarI(token[2:-1].strip(), False)
+    if token.startswith('!'):
+        return BVarI(token[1:].strip(), False)
+    return BVarI(token, True)

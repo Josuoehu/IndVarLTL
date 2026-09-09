@@ -1,11 +1,13 @@
-import os
 import re
+import tempfile
+from pathlib import Path
 
 from itertools import combinations
 from call import call_nusmv, call_nusmv_bounded, call_aalta
 from generate import req_to_string_2
 from readXML import parse_xml, not_same_var
 from read_aalta_result import parse_aalta, parse_aalta_var_list
+from project_paths import FILES_DIR
 
 
 def alg_iannopollo(env_vars, sys_vars, init_env, init_sys, ass, gua):
@@ -26,15 +28,15 @@ def alg_iannopollo(env_vars, sys_vars, init_env, init_sys, ass, gua):
                     for i in range(len(ncv) - 1, 0, -1):
                         left_f = isolate_vars(ncv, i)
                         calling_exp = "((" + left_f + ") & " + right_f[1:]
-                        call_nusmv("nuxmv_file.smv", calling_exp, "counterexample")
-                        if os.path.exists("../counterexample.xml"):
+                        trace_path = call_nusmv("nuxmv_file.smv", calling_exp, "counterexample")
+                        if trace_path.exists():
                             contraejemplo = True
-                            manage_counterexample_nusmv(env_vars, cv, treated)
+                            manage_counterexample_nusmv(env_vars, cv, treated, trace_path)
                             break
                     if not contraejemplo:
-                        call_nusmv("nuxmv_file.smv", right_f, "counterexample")
-                        if os.path.exists("../counterexample.xml"):
-                            manage_counterexample_nusmv(env_vars, cv, treated)
+                        trace_path = call_nusmv("nuxmv_file.smv", right_f, "counterexample")
+                        if trace_path.exists():
+                            manage_counterexample_nusmv(env_vars, cv, treated, trace_path)
                         else:
                             passed = True
             sys_vars = not_in_v(cv, sys_vars)
@@ -51,9 +53,9 @@ def alg_ainnopollo_nleft(env_vars, sys_vars, init_env, init_sys, ass, gua):
             treated.append(v)
             ncs = not_in_v(cs, sys_vars)
             fi = refine_formula(ass, gua, init_env, init_sys, cs, ncs, True)
-            call_nusmv("nuxmv_file.smv", fi, "counterexample")
-            if os.path.exists("../counterexample.xml"):
-                changing_vars = obtain_vars(env_vars, cs, treated)
+            trace_path = call_nusmv("nuxmv_file.smv", fi, "counterexample")
+            if trace_path.exists():
+                changing_vars = obtain_vars(env_vars, cs, treated, trace_path)
                 look_for_dependent_variables(cs, fi, changing_vars, env_vars, treated, sys_vars, ass, gua, init_env,
                                              init_sys)
             groups.append(cs)
@@ -88,27 +90,37 @@ def create_file(name, expression):
         f.write(expression)
 
 
+def _temporary_formula(expression):
+    with tempfile.NamedTemporaryFile(
+        mode='w', suffix='.ltl', dir=FILES_DIR, delete=False
+    ) as input_file:
+        input_file.write(expression)
+        return Path(input_file.name)
+
+
 def call_full_aalta(file_name, fi, cv, treated):
-    ruta = '../files/' + file_name
-    create_file(ruta, fi)
-    call_aalta(file_name, 'result.txt')
-    aalta_res, model = parse_aalta('../result.txt')
-    model = list(set(model))
-    l4 = not_in_v(cv, model)
-    l5 = not_in_v(treated, l4)
-    os.remove('../result.txt')
-    os.remove('../files/expression.dimacs')
-    return aalta_res, l5
+    input_path = _temporary_formula(fi)
+    result_path = input_path.with_suffix('.result.txt')
+    try:
+        call_aalta(input_path, result_path)
+        aalta_res, model = parse_aalta(result_path)
+        model = list(dict.fromkeys(model))
+        l4 = not_in_v(cv, model)
+        return aalta_res, not_in_v(treated, l4)
+    finally:
+        input_path.unlink(missing_ok=True)
+        result_path.unlink(missing_ok=True)
 
 
 def call_aalta_var_list(file_name, fi):
-    ruta = '../files/' + file_name
-    create_file(ruta, fi)
-    call_aalta(file_name, 'result.txt')
-    aalta_res, model = parse_aalta_var_list('../result.txt')
-    os.remove('../result.txt')
-    os.remove('../files/expression.dimacs')
-    return aalta_res, model
+    input_path = _temporary_formula(fi)
+    result_path = input_path.with_suffix('.result.txt')
+    try:
+        call_aalta(input_path, result_path)
+        return parse_aalta_var_list(result_path)
+    finally:
+        input_path.unlink(missing_ok=True)
+        result_path.unlink(missing_ok=True)
 
 
 def look_for_dependent_variables(cs, fi, chang_vars, env_vars, treated, sys_vars, ass, gua, init_env, init_sys):
@@ -116,9 +128,9 @@ def look_for_dependent_variables(cs, fi, chang_vars, env_vars, treated, sys_vars
     z = cz[0]
     inv = " | F(" + z + " != " + z + "_)"
     nfi = fi + inv
-    call_nusmv("nuxmv_file.smv", nfi, "counterexample")
-    if os.path.exists("../counterexample.xml"):
-        changing_vars = obtain_vars(env_vars, cs, treated)
+    trace_path = call_nusmv("nuxmv_file.smv", nfi, "counterexample")
+    if trace_path.exists():
+        changing_vars = obtain_vars(env_vars, cs, treated, trace_path)
         return look_for_dependent_variables(cs, nfi, changing_vars, env_vars, treated, sys_vars, ass, gua, init_env,
                                             init_sys)
     else:
@@ -127,9 +139,9 @@ def look_for_dependent_variables(cs, fi, chang_vars, env_vars, treated, sys_vars
         ncs = not_in_v(cs, sys_vars)
         if ncs:
             fffi = refine_formula(ass, gua, init_env, init_sys, cs, ncs, True)
-            call_nusmv("nuxmv_file.smv", fffi, "counterexample")
-            if os.path.exists("../counterexample.xml"):
-                changing_vars = obtain_vars(env_vars, cs, treated)
+            trace_path = call_nusmv("nuxmv_file.smv", fffi, "counterexample")
+            if trace_path.exists():
+                changing_vars = obtain_vars(env_vars, cs, treated, trace_path)
                 return look_for_dependent_variables(cs, fffi, changing_vars, env_vars, treated, sys_vars, ass, gua,
                                                     init_env, init_sys)
             else:
@@ -169,9 +181,11 @@ def look_for_dependent_variables_aalta(cs, fi, chang_vars, env_vars, treated, sy
             return cs
 
 
-def manage_counterexample_nusmv(var, cv, treated):
-    counterex = parse_xml("../counterexample.xml")
-    os.remove("../counterexample.xml")
+def manage_counterexample_nusmv(var, cv, treated, trace_path):
+    try:
+        counterex = parse_xml(trace_path)
+    finally:
+        trace_path.unlink(missing_ok=True)
     dvars = list(set(not_same_var(counterex)))
     l3 = [x for x in dvars if x not in var]
     l4 = not_in_v(cv, l3)
@@ -180,9 +194,11 @@ def manage_counterexample_nusmv(var, cv, treated):
     treated.extend(l5)
 
 
-def obtain_vars(var, cv, treated):
-    counterex = parse_xml("../counterexample.xml")
-    os.remove("../counterexample.xml")
+def obtain_vars(var, cv, treated, trace_path):
+    try:
+        counterex = parse_xml(trace_path)
+    finally:
+        trace_path.unlink(missing_ok=True)
     dvars = list(set(not_same_var(counterex)))
     l3 = [x for x in dvars if x not in var]
     l4 = not_in_v(cv, l3)
@@ -319,10 +335,9 @@ def gen_disj(ncv):
 
 
 def renaming(exp, w, r_struct):
-    exp1 = r'([( !&|]' + w + r')([) !&|])'
-    # reg_exp = re.compile(exp)
-    result = re.sub(exp1, r'\1' + r_struct + r'\2', exp)
-    return result
+    identifier = re.escape(w)
+    pattern = rf'(?<![a-z0-9_]){identifier}(?![a-z0-9_])'
+    return re.sub(pattern, lambda match: match.group(0) + r_struct, exp)
 
 
 # Deletes de vars from var that are in cv

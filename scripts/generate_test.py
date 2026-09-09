@@ -105,18 +105,18 @@ def test_requirement(l, r, index):
         llamada = "!(F(" + l_list[i] + "))"
         print(llamada)
         # call_nusmv("nuxmv_file_prev.smv", llamada, "counterexample", 5000)
-        call_nusmv("nuxmv_file_prev.smv", llamada, "counterexample")
-        if os.path.exists("../data/counterexample.xml"):
+        trace_path = call_nusmv("nuxmv_file_prev.smv", llamada, "counterexample")
+        if trace_path.exists():
             # Counterexample exists
             listar = make_a_list(r, [])
             if len(l_list) == 1:
                 listal = make_a_list(l, [])
             else:
-                lll = parse_req_exp(l_list[i])
+                lll = parse_req_exp(l_list[i], 'ltl')
                 listal = make_a_list(lll, [])
             lista = (listal, listar)
-            result = parse_xml("../data/counterexample.xml", lista)
-            os.remove("../data/counterexample.xml")
+            result = parse_xml(trace_path)
+            trace_path.unlink(missing_ok=True)
             devolver.append((prim, result))
         else:
             devolver.append((prim, ['There is no counter-example']))

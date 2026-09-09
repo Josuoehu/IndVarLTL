@@ -1,0 +1,2 @@
+F(p -> X(a & b))
+env_vars:p

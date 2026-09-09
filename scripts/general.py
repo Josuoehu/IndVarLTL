@@ -1,15 +1,28 @@
 import os
 import argparse
+import shlex
+import shutil
 import stat
+import tempfile
 import time
+from pathlib import Path
 
-from call import call_nusmv, call_get_path
+from call import SolverError, call_nusmv, call_get_path
 from generate_nuxmv import create_nusmv_file
 from alg_paper import not_in_v, renaming, call_full_aalta, call_aalta_var_list
 from readXML import parse_xml, not_same_var
 from req_parser import parse_req_exp
 from sys import platform
-from os import path
+from project_paths import FILES_DIR, RESULTS_DIR, SCRIPTS_DIR
+
+
+def _temporary_nusmv_file(env_vars, sys_vars):
+    descriptor, model_path = tempfile.mkstemp(
+        prefix='indvar_', suffix='.smv', dir=SCRIPTS_DIR
+    )
+    os.close(descriptor)
+    create_nusmv_file(env_vars, sys_vars, model_path)
+    return Path(model_path)
 
 
 def generate_exp(fi, cs, ncs, is_nusmv):
@@ -49,25 +62,25 @@ def generate_exp(fi, cs, ncs, is_nusmv):
         return f"({fi_cs}) & ({fi_not_cs}) & !({fi})"
 
 
-def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv):
+def look_for_dep_var(fi, oldfi, changing_vars, cs, treated, cv, model_file):
     # cz = not_in_v(cs, changing_vars)
     z = changing_vars[0]
     inv = " | !(" + z + " <-> " + z + "_)"
     newfi = oldfi + inv
-    call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-    if os.path.exists("../counterexample.xml"):
-        new_changing_vars = ob_vars(cs, treated)
-        return look_for_dep_var(fi, newfi, new_changing_vars, cs, treated, cv)
+    trace_path = call_nusmv(model_file, newfi, "counterexample")
+    if trace_path.exists():
+        new_changing_vars = ob_vars(cs, treated, trace_path)
+        return look_for_dep_var(fi, newfi, new_changing_vars, cs, treated, cv, model_file)
     else:
         cs.append(z)
         treated.append(z)
         ncs = not_in_v(cs, cv)
         if ncs:
             other_fi = generate_exp(fi, cs, ncs, True)
-            call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
-            if os.path.exists("../counterexample.xml"):
-                changing_vars = ob_vars(cs, treated)
-                return look_for_dep_var(fi, other_fi, changing_vars, cs, treated, cv)
+            trace_path = call_nusmv(model_file, other_fi, "counterexample")
+            if trace_path.exists():
+                changing_vars = ob_vars(cs, treated, trace_path)
+                return look_for_dep_var(fi, other_fi, changing_vars, cs, treated, cv, model_file)
             else:
                 return cs
         else:
@@ -105,7 +118,7 @@ def look_for_dep_var_while_aalta(fi, oldfi, changing_vars, cs, treated, cv, is_m
         return cs
 
 
-def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, is_temporal):
+def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, is_temporal, model_file):
     # cz = not_in_v(cs, changing_vars)
     newfi = oldfi
     while is_model:
@@ -115,9 +128,13 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, 
         else:
             inv = " | !(" + z + " <-> " + z + "_)"
         newfi += inv
-        call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-        if os.path.exists("../counterexample.xml"):
-            new_changing_vars = ob_vars(cs, treated)
+        trace_path = call_nusmv(model_file, newfi, "counterexample")
+        if trace_path.exists():
+            new_changing_vars = ob_vars(cs, treated, trace_path)
+            if not new_changing_vars:
+                raise RuntimeError(
+                    "The counterexample contains no untreated dependent variable"
+                )
             changing_vars = new_changing_vars
         else:
             is_model = False
@@ -127,10 +144,17 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, 
     ncs = not_in_v(cs, cv)
     if ncs:
         other_fi = generate_exp(fi, cs, ncs, True)
-        call_nusmv("nuxmv_file.smv", other_fi, "counterexample")
-        if os.path.exists("../counterexample.xml"):
-            changing_vars = ob_vars(cs, treated)
-            return look_for_dep_var_while(fi, other_fi, changing_vars, cs, treated, cv, True, is_temporal)
+        trace_path = call_nusmv(model_file, other_fi, "counterexample")
+        if trace_path.exists():
+            changing_vars = ob_vars(cs, treated, trace_path)
+            if not changing_vars:
+                raise RuntimeError(
+                    "The counterexample contains no untreated dependent variable"
+                )
+            return look_for_dep_var_while(
+                fi, other_fi, changing_vars, cs, treated, cv, True,
+                is_temporal, model_file
+            )
         else:
             return cs
     else:
@@ -138,31 +162,26 @@ def look_for_dep_var_while(fi, oldfi, changing_vars, cs, treated, cv, is_model, 
 
 
 def partition(fi, cv):
-    conjuntos =[]
-    cs = []
-    treated = []
-    for v in cv:
-        if not v in treated:
-            cs = [v]
-            treated.append(v)
-            ncs = not_in_v(cs, cv)
-            if ncs:
-                newfi = generate_exp(fi, cs, ncs, True)
-                call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-                if os.path.exists("../counterexample.xml"):
-                    changing_vars = ob_vars(cs, treated)
-                    cs = look_for_dep_var(fi, newfi, changing_vars, cs, treated, cv)
-                cv = not_in_v(cs, cv)
-            conjuntos.append(cs)
-            # print("New group " + str(cs))
-    return conjuntos
+    return partition_general(fi, cv, [], False, True)
 
 
 def partition_general(fi, cv, treated, is_temporal, is_nusmv):
+    expected_variables = list(cv)
     if is_nusmv:
-        return partition_recursive(fi, cv, treated, is_temporal)
+        groups = partition_recursive(fi, cv, treated, is_temporal)
     else:
-        return partition_recursive_aalta(fi, cv, treated, is_temporal)
+        groups = partition_recursive_aalta(fi, cv, treated, is_temporal)
+
+    flattened = flatt_list(groups)
+    if len(flattened) != len(set(flattened)):
+        raise RuntimeError(f"Solver produced overlapping variable groups: {groups}")
+    if set(flattened) != set(expected_variables):
+        missing = sorted(set(expected_variables) - set(flattened))
+        unexpected = sorted(set(flattened) - set(expected_variables))
+        raise RuntimeError(
+            f"Invalid variable partition; missing={missing}, unexpected={unexpected}"
+        )
+    return groups
 
 
 def partition_recursive_aalta(fi, cv, treated, is_temporal):
@@ -192,16 +211,25 @@ def partition_recursive(fi, cv, treated, is_temporal):
     else:
         v = cv[0]
         cs = [v]
-        create_nusmv_file(treated, cv)
-        treated.append(v)
-        ncs = not_in_v(cs, cv)
-        newfi = generate_exp(fi, cs, ncs, True)
-        call_nusmv("nuxmv_file.smv", newfi, "counterexample")
-        if os.path.exists("../counterexample.xml"):
-            changing_vars = ob_vars(cs, treated)
-            cs = look_for_dep_var_while(fi, newfi, changing_vars, cs, treated, cv, True, is_temporal)
-        cv = not_in_v(cs, cv)
-        os.remove("nuxmv_file.smv")
+        model_file = _temporary_nusmv_file(treated, cv)
+        try:
+            treated.append(v)
+            ncs = not_in_v(cs, cv)
+            newfi = generate_exp(fi, cs, ncs, True)
+            trace_path = call_nusmv(model_file, newfi, "counterexample")
+            if trace_path.exists():
+                changing_vars = ob_vars(cs, treated, trace_path)
+                if not changing_vars:
+                    raise RuntimeError(
+                        "The counterexample contains no untreated dependent variable"
+                    )
+                cs = look_for_dep_var_while(
+                    fi, newfi, changing_vars, cs, treated, cv, True,
+                    is_temporal, model_file
+                )
+            cv = not_in_v(cs, cv)
+        finally:
+            model_file.unlink(missing_ok=True)
         return [cs] + partition_recursive(fi, cv, treated, is_temporal)
 
 
@@ -244,99 +272,113 @@ def var_list_exp(exp):
     return list(dict.fromkeys(l))
 
 
-def ob_vars(cs, treated):
-    counterex = parse_xml("../counterexample.xml")
-    os.remove("../counterexample.xml")
-    # No se si aquí es necesario list(set())
-    dvars = list(set(not_same_var(counterex)))
+def ob_vars(cs, treated, trace_path):
+    try:
+        counterex = parse_xml(trace_path)
+    finally:
+        Path(trace_path).unlink(missing_ok=True)
+    dvars = list(dict.fromkeys(not_same_var(counterex)))
     l3 = not_in_v(cs, dvars)
-    # l4 = not_in_v(treated, l3)
-    return l3
+    return not_in_v(treated, l3)
 
 
 def __env_process(l):
-    vars = l.lower().split(":")
-    # print(str(vars) + " Split interior.")
-    if vars[0] == "env_vars":
-        return extract_env_vars(vars[1])
-    else:
-        return []
+    prefix, separator, values = l.partition(":")
+    if prefix.strip().lower() != "env_vars":
+        return None
+    if not separator:
+        raise ValueError("An env_vars declaration must contain ':'")
+    return extract_env_vars(values)
 
 
-def terminal_use():
-    # Read the arguments from the terminal
-    parser = argparse.ArgumentParser(description="Descomposition tool")
-    parser.add_argument("-f", dest="filename", help="Input the file with the logical expression", 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="LTL decomposition tool")
+    parser.add_argument("-f", dest="filename", help="Read the logical expression from FILE",
                         metavar="FILE")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--solver",
+        choices=("nusmv", "aalta"),
+        help="Solver backend (default: NuSMV on macOS; prompt on Linux)",
+    )
+    return parser.parse_args()
+
+
+def terminal_use(args=None):
+    # Read the arguments from the terminal
+    if args is None:
+        args = parse_arguments()
     # print("Entra aquí")
     if not args.filename:
         return "", [], ""
     else:
         if not os.path.exists(args.filename):
-            raise Exception
+            parser.error(f"file not found: {args.filename}")
         else:
-            formula = ""
+            formula_parts = []
             e_vars = []
-            file = open(args.filename, "r")
-            lines = file.readlines()
-            for line in lines:
-                if line[-1] == '\n':
-                    l = str(line[:-1])
-                    e_vars = __env_process(l)
-                    if not e_vars:
-                        formula += l
-                else:
-                    e_vars = __env_process(line)
-                    if not e_vars:
-                        formula += str(line)
-            file.close()
-            # print("No hay variables de entorno" + str(e_vars))
+            env_declaration_seen = False
+            with open(args.filename, "r") as input_file:
+                for line in input_file:
+                    text = line.rstrip('\n')
+                    declared_vars = __env_process(text)
+                    if declared_vars is None:
+                        formula_parts.append(text)
+                    elif env_declaration_seen:
+                        raise ValueError("Only one env_vars declaration is allowed")
+                    else:
+                        e_vars = declared_vars
+                        env_declaration_seen = True
+            formula = ''.join(formula_parts)
             return formula, e_vars, args.filename
 
 
 def no_file_terminal():
     # When there is no file in the arguments
-    print("\nIntroduce the formula:")
+    print("\nEnter the formula:")
     formula = input()
     return formula
 
 
-def __get_formula():
+def __get_formula(args=None):
     file_name = ""
-    f, e, file_name = terminal_use()
+    f, e, file_name = terminal_use(args)
     if not f:
         f = no_file_terminal()
     return f, e, file_name
 
 
-def create_bash_file(path, is_nusmv):
-    # Create the NuSMV bash file to call it given the path
+def create_bash_file(solver_path, is_nusmv):
+    # Create the solver launcher using the discovered executable path.
+    executable = shlex.quote(str(solver_path))
     if is_nusmv:
-        f = open("call_nusmv.sh", "w")
-        f.write("#!/bin/bash\n\n" + str(path) + " -int $2 <<< $1")
-        f.close()
-        os.chmod("./call_nusmv.sh", stat.S_IRWXU)
+        script_name = SCRIPTS_DIR / "call_nusmv.sh"
+        content = f'#!/bin/bash\n\n{executable} -int "$2" <<< "$1"'
     else:
-        f = open("call_aalta.sh", "w")
-        f.write("#!/bin/bash\n\ncat $1 | " + str(path) + " -e > $2")
-        f.close()
-        os.chmod("./call_aalta.sh", stat.S_IRWXU)
+        script_name = SCRIPTS_DIR / "call_aalta.sh"
+        content = f'#!/bin/bash\n\ncat "$1" | {executable} -e > "$2"'
+
+    with open(script_name, "w") as script:
+        script.write(content)
+    os.chmod(script_name, stat.S_IRWXU)
 
 
 def get_app_path(is_linux, is_nusmv):
-    # Given if the system is Linux or not (MacOS) gets the path of NuSMV in the computer
+    # Prefer executables available on PATH, including Homebrew installations.
+    executable = "NuSMV" if is_nusmv else "aalta"
+    solver_path = shutil.which(executable)
+    if solver_path:
+        return solver_path
+
+    # Retain the original filesystem search as a fallback.
     call_get_path(is_linux, is_nusmv)
+    paths_file = FILES_DIR / "allpaths.txt"
     try:
-        f = open("../files/allpaths.txt")
-        line = f.readline()
-        if line[-1] == '\n':
-            line = line[:-1]
-        os.remove("../files/allpaths.txt")
-    except Exception:
+        with open(paths_file) as paths:
+            return paths.readline().rstrip("\n")
+    except OSError:
         return ""
-    else:
-        return line
+    finally:
+        paths_file.unlink(missing_ok=True)
 
 
 def checker_path(is_linux, is_nusmv):
@@ -349,7 +391,7 @@ def checker_path(is_linux, is_nusmv):
 
 def pregunta_path(is_linux, is_nusmv):
     # Questions to start the app
-    print("Looking for the path...")
+    print("Looking for the solver executable...")
     checker_path(is_linux, is_nusmv)
 
 
@@ -363,20 +405,24 @@ def get_the_partition(formula, var_tree, variables, var_groups, is_nusmv):
     #   Save the result of the final expression
     model = None
     if is_nusmv:
-        create_nusmv_file(variables, [])
-        call_nusmv("nuxmv_file.smv", '!(' + formula + ')', "counterexample")
-        if os.path.exists("../counterexample.xml"):
-            counterex = parse_xml("../counterexample.xml")
-            os.remove("../counterexample.xml")
-            # Accedo al primer elemento de la lista compuesta por nodos, y luego a las variables normales
+        model_file = _temporary_nusmv_file(variables, [])
+        try:
+            trace_path = call_nusmv(
+                model_file, '!(' + formula + ')', "counterexample"
+            )
+            if not trace_path.exists():
+                raise SystemExit('The formula has no satisfying model.')
+            try:
+                counterex = parse_xml(trace_path)
+            finally:
+                trace_path.unlink(missing_ok=True)
             model = counterex[0][0]
-            os.remove("nuxmv_file.smv")
-        else:
-            quit('It does not exist a model for the formula.')
+        finally:
+            model_file.unlink(missing_ok=True)
     else:
         aalta_res, model = call_aalta_var_list('expression.dimacs', formula)
-        if not model:
-            quit('It does not exist a model for the formula.')
+        if aalta_res == 'unsat':
+            raise SystemExit('The formula has no satisfying model.')
     f = []
     i = 0
     for i in range(len(var_groups)):
@@ -451,7 +497,7 @@ def __simplify_tree(tree):
                     return 'True'
                 else:
                     # ->
-                    return True
+                    return 'True'
             elif tree[2] == 'False':
                 if tree[0] == '&':
                     return 'False'
@@ -507,14 +553,15 @@ def __get_var_value(v, model):
     for m in model:
         if v == m.get_name():
             return str(m.get_value())
+    raise RuntimeError(f"The solver model does not contain variable '{v}'")
 
 
 def ask_for_env(variables, res):
     evars = extract_env_vars(res)
     for v in evars:
         if v not in variables:
-            print("The variable " + v + " does not exist in the formula. Try again or leave the process typing "
-                                        "\"quit\":\n")
+            print(f"The variable '{v}' does not occur in the formula. "
+                  "Enter the environment variables again, or type 'quit' to exit:")
             r = input()
             r = r.replace(" ", "")
             if r == "quit":
@@ -526,8 +573,7 @@ def ask_for_env(variables, res):
 # G((p -> X(v & !(t))) & (! p -> X(!(v) & t)) & (v -> X(!(w) & u)) & (!(v) -> X(w & !(u))))
 def extract_env_vars(res):
     res_a = res.replace(" ", "")
-    evars = res_a.split(",")
-    return evars
+    return list(dict.fromkeys(var for var in res_a.split(",") if var))
 
 
 def check_is_temporal(var_tree):
@@ -551,10 +597,10 @@ def check_is_temporal(var_tree):
         return False
 
 
-def full_process(first, is_nusmv):
+def full_process(first, is_nusmv, args=None):
     # Gets the formula and calls the main method partition_recursive
     if first:
-        formula, env_vars, file_name = __get_formula()
+        formula, env_vars, file_name = __get_formula(args)
         # print(file_name)
     else:
         formula = no_file_terminal()
@@ -562,22 +608,30 @@ def full_process(first, is_nusmv):
         file_name = ""
     var_tree = parse_req_exp(formula, 'ltl')
     variables = var_list_exp(var_tree)
+    unknown_env_vars = sorted(set(env_vars) - set(variables))
+    if unknown_env_vars:
+        source = f" in {file_name}" if file_name else ""
+        raise SystemExit(
+            f"Environment variable(s){source} do not occur in the formula: "
+            + ", ".join(unknown_env_vars)
+        )
     if check_is_temporal(var_tree):
         sys_vars = variables.copy()
         if not env_vars:
-            print("\nCan you tell me which are the environment variables? If there are not type \"-\":")
+            print("\nEnter the environment variables as a comma-separated list, "
+                  "or type '-' if there are none:")
             res = input()
             if res != "-":
                 env_vars = ask_for_env(variables, res)
                 sys_vars = not_in_v(env_vars, variables)
         else:
             sys_vars = not_in_v(env_vars, variables)
-        print("Asking the question...")
+        print("Computing the decomposition...")
         time.sleep(1)
         var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
-        form_groups = []
+        form_groups = None
     else:
-        print("Asking the question...")
+        print("Computing the decomposition...")
         time.sleep(1)
         var_groups = partition_general(formula, variables, [], False, is_nusmv)
         form_groups = get_the_partition(formula, var_tree, variables, var_groups, is_nusmv)
@@ -592,24 +646,21 @@ def get_so():
     elif platform == "win32":
         return "windows"
     else:
-        quit("\nThere are some problems with your SO, see you next time!")
+        quit("\nThis operating system is not supported.")
 
 
 def output_file(v_g, f_g, name):
     # Creation of the output file
-    frag = name.split(sep="/")
-    real_name = frag[len(frag)-1]
-    ruta = '../results/' + real_name[:-4] + '_r.txt'
-    out_file = open(ruta, 'w')
-    out_file.write("Results of the Decomposition of " + real_name + " file.\n\n")
-    out_file.write("The variables are decomposed in the following groups: ")
-    __print_variables(out_file, v_g)
-    if not f_g:
-        out_file.write("Formula decomposition for LTL functionality is not available yet, coming soon...")
-    else:
-        out_file.write("The formulas are decomposed the following way: ")
-        __print_variables(out_file, f_g)
-    out_file.close()
+    input_path = Path(name)
+    output_path = RESULTS_DIR / f'{input_path.stem}_r.txt'
+    RESULTS_DIR.mkdir(exist_ok=True)
+    with output_path.open('w') as out_file:
+        out_file.write(f"Decomposition results for {input_path.name}.\n\n")
+        out_file.write("The variables are decomposed into the following groups: ")
+        __print_variables(out_file, v_g)
+        if f_g is not None:
+            out_file.write("The formulas are decomposed as follows: ")
+            __print_variables(out_file, f_g)
 
 
 def __print_variables(out_file, v_g):
@@ -620,55 +671,75 @@ def __print_variables(out_file, v_g):
     out_file.write(line[:-2] + "\n")
 
 
-def main_in(first, program_name, is_nusmv):
-    var_groups, form_groups, file_name = full_process(first, is_nusmv)
-    print("\nThe variable decomposition is:\n" + str(var_groups))
-    print("The formula decomposition is:\n" + str(form_groups))
+def main_in(first, program_name, is_nusmv, args=None):
+    var_groups, form_groups, file_name = full_process(first, is_nusmv, args)
+    print("\nVariable decomposition:\n" + str(var_groups))
+    if form_groups is not None:
+        print("Formula decomposition:\n" + str(form_groups))
     if file_name != "":
         # print("Entra en el if the creacion de fichero.")
         output_file(var_groups, form_groups, file_name)
     time.sleep(1)
-    print("\nWill you continue using " + program_name + "?\nType 1 if so, anything else if not.")
+    print("\nWould you like to continue using " + program_name + "?\n"
+          "Enter 1 to continue, or any other value to exit:")
     res1 = input()
     if res1 == '1':
-        main_in(False, program_name, is_nusmv)
+        main_in(False, program_name, is_nusmv, args)
     else:
         print("\nSee you next time!")
 
 
 def main():
+    args = parse_arguments()
     program_name = "IndVarLTL"
-    print("Welcome to " + program_name + " Tool.")
+    print("Welcome to " + program_name + ".")
     is_nusmv = True
-    os = get_so()
-    if os == "windows":
-        quit("We cannot execute this programm on Windows, sorry. See you in the near future!")
-    elif os == "macos":
-        print("We are using NuSMV during the hole process because we cannot use Aalta in MacOS.")
-        if not path.isfile("./call_nusmv.sh"):
+    os_name = get_so()
+    if os_name == "windows":
+        quit("IndVarLTL does not currently support Windows.")
+
+    if args.solver is not None:
+        is_nusmv = args.solver == "nusmv"
+        solver_name = "NuSMV" if is_nusmv else "Aalta"
+        print(f"{solver_name} was selected with --solver.")
+        launcher = SCRIPTS_DIR / (
+            "call_nusmv.sh" if is_nusmv else "call_aalta.sh"
+        )
+        if not launcher.is_file():
+            pregunta_path(os_name == "linux", is_nusmv)
+    elif os_name == "macos":
+        print("NuSMV will be used by default. Use --solver aalta to select Aalta.")
+        if not (SCRIPTS_DIR / "call_nusmv.sh").is_file():
             pregunta_path(False, True)
     else:
-        print("\nWould you like to use NuSMV or Aalta?\nType 1 for NuSMV, 2 for Aalta, anything else if you want to leave.")
+        print("\nWhich solver would you like to use?\n"
+              "Enter 1 for NuSMV, 2 for Aalta, or any other value to exit:")
         res1 = input()
         if res1 == '1':
-            if not path.isfile("./call_nusmv.sh"):
+            if not (SCRIPTS_DIR / "call_nusmv.sh").is_file():
                 pregunta_path(True, is_nusmv)
         elif res1 == '2':
             is_nusmv = False
-            if not path.isfile("./call_aalta.sh"):
+            if not (SCRIPTS_DIR / "call_aalta.sh").is_file():
                 pregunta_path(True, is_nusmv)
         else:
             quit("\nSee you next time!")
 
-    if path.isfile("./call_nusmv.sh") or path.isfile("./call_aalta.sh"):
-        main_in(True, program_name, is_nusmv)
+    selected_launcher = SCRIPTS_DIR / (
+        "call_nusmv.sh" if is_nusmv else "call_aalta.sh"
+    )
+    if selected_launcher.is_file():
+        main_in(True, program_name, is_nusmv, args)
     else:
-        print("A problem has been found. Please check that you have NuSMV or Aalta installed"
-              ".\nIn case you have alredy installed you can contact the developers by email:"
-              " \"josu.oca@udg.edu\".")
+        print("A solver could not be configured. Make sure that NuSMV or Aalta is installed."
+              "\nIf a solver is already installed, contact the developers at "
+              "josu.oca@udg.edu.")
 
 
 if __name__ == '__main__':
     # start_time = time.time()
-    main()
+    try:
+        main()
+    except SolverError as error:
+        raise SystemExit(f"Solver error: {error}") from error
     # prueba()

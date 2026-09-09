@@ -1,6 +1,10 @@
-venv
+.venv/
+venv/
+__pycache__/
+*.py[cod]
 scripts/call_aalta.sh
 scripts/call_nusmv.sh
-scripts/__pycache__/*
 results/*
+counterexample*.xml
+cnf.dimacs
 .idea/IndVarLTL.iml

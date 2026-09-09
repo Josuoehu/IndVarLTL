@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from parser import *
 from req_parser import is_var_in_tree
@@ -8,13 +8,15 @@ from generate import req_to_string
 def create_document(name, first):
     # Creates a document in order to write on it
     try:
-        name = name + '.smv'
-        file = open(name, "a")
+        name = Path(name)
+        if name.suffix != '.smv':
+            name = name.with_suffix('.smv')
+        file = name.open("w")
         if first:
             file.write("MODULE main \n \n")
         return file
     except IOError:
-        print('Maybe you have not introduce the correct path of the file')
+        print('The file could not be created. Check that the path is correct.')
         exit()
 
 
@@ -98,8 +100,8 @@ def assumptions_and_guarantees(json):
     return load_requirements(json, False), load_requirements(json, True)
 
 
-def create_nusmv_file(env_vars, sys_vars):
-    nusmv_file = create_document('nuxmv_file', True)
+def create_nusmv_file(env_vars, sys_vars, output_path='nuxmv_file.smv'):
+    nusmv_file = create_document(output_path, True)
     nusmv_file.write('VAR \n \n')
     for v in env_vars:
         nusmv_file.write(v + ": boolean;\n")
@@ -108,3 +110,4 @@ def create_nusmv_file(env_vars, sys_vars):
         nusmv_file.write(v + "_: boolean;\n")
     nusmv_file.write("\nFAIRNESS TRUE")
     close_document(nusmv_file)
+    return str(Path(output_path).with_suffix('.smv'))

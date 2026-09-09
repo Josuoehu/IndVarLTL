@@ -1,15 +1,15 @@
+import json
+
 from classes import *
+from project_paths import PROJECT_ROOT
 from req_parser import parse_req_exp, is_in_tree, insert_in_tree
 
 
 def read_file(file):
-    # Reads the file.json and returns a dictionary
-
-    ruta = '../data/inputs' + file
-    with open(ruta, 'r') as dict_file:
-        dict_text = dict_file.read()
-        diccionario = eval(dict_text)
-        return diccionario
+    # Reads a JSON input file and returns a dictionary.
+    input_path = PROJECT_ROOT / 'data' / 'inputs' / str(file).lstrip('/\\')
+    with input_path.open('r') as dict_file:
+        return json.load(dict_file)
 
 
 def load_ivars(ob):
