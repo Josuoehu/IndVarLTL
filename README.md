@@ -15,10 +15,13 @@ decomposition but are not included in the resulting system-variable groups.
   [Aalta](https://github.com/lijwen2748/aalta) as the back-end solver.
 - Read a formula interactively or from a multiline text file.
 - Write file-based results to the `results/` directory.
-- Derive formula components for non-temporal formulas.
+- Derive formula components for propositional and supported temporal formulas.
+- Certify temporal components by checking both directions of LTL equivalence.
 
-For LTL input, the current implementation produces the variable partition but
-does not yet produce a formula-level decomposition.
+For LTL input, extraction uses the known output partition, exact rewriting,
+context propagation, and whole-formula polarity analysis. Extraction is sound
+when certified but incomplete: some independent partitions may not yield LTL
+components with the implemented rules.
 
 ## Requirements
 
@@ -143,8 +146,14 @@ also prints the formula decomposition:
   dependent component.
 - **Formula decomposition**: simplified components for propositional input.
 
-For LTL input, the formula-decomposition section is omitted because that
-functionality is not currently available.
+For LTL input, the output includes an extraction status:
+
+- `certified`: both implication directions were explicitly proved by the solver.
+- `incomplete`: candidate formulas do not reconstruct the original; a witness is
+  included. This does not establish that the supplied groups are dependent.
+- `unknown`: the solver failed or did not return an explicit answer.
+
+Uncertified formulas are labeled as candidates, including in saved results.
 
 When `-f FILE` is used, the program also creates
 `results/<input-name>_r.txt`. Interactive input is printed only to the terminal.
@@ -204,3 +213,46 @@ Run the regression tests with:
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+## Temporal component extraction
+
+The program first rewrites conjunctions under `G`, `X`, and implications, and
+assigns requirements to the known output groups. For remaining mixed
+requirements, it retains assigned requirements as context. Current-state facts
+never cross a temporal operator. Global conjuncts `G(p)` or `G(!p)` can constrain
+other requirements throughout the future, while retaining their justification.
+For example, `G(b) & G(a | !b)` yields `G(a)` and `G(b)`.
+
+For each group, remaining foreign outputs with a single polarity in the **whole
+simplified formula** can be eliminated exactly: positive signals become true,
+negative signals become false. Mixed-polarity signals are not eliminated this
+way. Local consequences are collected and their complete conjunction is checked
+against the original formula. There is no approximate literal-erasure step.
+The AST API reserves `true`/`false` (also uppercase) for Boolean constants.
+
+The Python API, with `scripts/` on the import path, is:
+
+```python
+from ltl_decompose import decompose_ltl
+
+result = decompose_ltl(
+    'G(b) & G(a | !b)',
+    env_vars=[],
+    independent_groups=[['a'], ['b']],
+    solver='nusmv',
+)
+# result.status == 'certified'
+# result.components == ['G(a)', 'G(b)']
+```
+
+Input-only obligations are retained in every component. With no outputs, the
+result contains one input-only obligation. The certificate preserves realizability
+under synchronous synthesis with the original inputs observable to every
+component, disjoint controlled outputs, and the same Mealy/Moore convention.
+It does not decide realizability or synthesize controllers.
+
+The extractor supports the existing Boolean/X/F/G fragment. It does not infer
+arbitrary temporal invariants or guarantee extraction for every independent
+partition. NuSMV/Aalta launchers must already be configured (the CLI configures
+them normally). Semantic tests run with NuSMV when its executable and launcher
+are available; otherwise those integration tests are skipped.

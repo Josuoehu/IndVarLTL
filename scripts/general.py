@@ -7,6 +7,7 @@ import tempfile
 import time
 from pathlib import Path
 
+from ltl_decompose import decompose_ltl, DecompositionResult, format_result
 from call import SolverError, call_nusmv, call_get_path
 from generate_nuxmv import create_nusmv_file
 from alg_paper import not_in_v, renaming, call_full_aalta, call_aalta_var_list
@@ -628,8 +629,10 @@ def full_process(first, is_nusmv, args=None):
             sys_vars = not_in_v(env_vars, variables)
         print("Computing the decomposition...")
         time.sleep(1)
-        var_groups = partition_general(formula, sys_vars, env_vars, True, is_nusmv)
-        form_groups = None
+        var_groups = partition_general(formula, sys_vars, env_vars.copy(), True, is_nusmv)
+        form_groups = decompose_ltl(
+            formula, env_vars, var_groups, "nusmv" if is_nusmv else "aalta"
+        )
     else:
         print("Computing the decomposition...")
         time.sleep(1)
@@ -658,7 +661,9 @@ def output_file(v_g, f_g, name):
         out_file.write(f"Decomposition results for {input_path.name}.\n\n")
         out_file.write("The variables are decomposed into the following groups: ")
         __print_variables(out_file, v_g)
-        if f_g is not None:
+        if isinstance(f_g, DecompositionResult):
+            out_file.write(format_result(f_g) + "\n")
+        elif f_g is not None:
             out_file.write("The formulas are decomposed as follows: ")
             __print_variables(out_file, f_g)
 
@@ -674,7 +679,9 @@ def __print_variables(out_file, v_g):
 def main_in(first, program_name, is_nusmv, args=None):
     var_groups, form_groups, file_name = full_process(first, is_nusmv, args)
     print("\nVariable decomposition:\n" + str(var_groups))
-    if form_groups is not None:
+    if isinstance(form_groups, DecompositionResult):
+        print(format_result(form_groups))
+    elif form_groups is not None:
         print("Formula decomposition:\n" + str(form_groups))
     if file_name != "":
         # print("Entra en el if the creacion de fichero.")
