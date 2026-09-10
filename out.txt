@@ -1,0 +1,8 @@
+Result: CERTIFIED 
+
+Component 1:
+  Environment vars: p
+  System vars: {v, w, u}
+  Fórmula: ...
+
+...

@@ -13,6 +13,8 @@ class DecompositionResult:
     residual: list = field(default_factory=list)
     counterexample: dict | None = None
     reason: str | None = None
+    env_vars: list = field(default_factory=list)
+    output_groups: list = field(default_factory=list)
 
 
 def decompose_ltl(formula, env_vars, independent_groups, solver='nusmv'):
@@ -56,6 +58,8 @@ def decompose_ltl(formula, env_vars, independent_groups, solver='nusmv'):
     result = DecompositionResult(
         status='incomplete', components=[c.text() for c in candidates],
         residual=[r.text() for r in residual],
+        env_vars=list(env_vars),
+        output_groups=[list(g) for g in independent_groups] or [[]],
     )
     try:
         valid, witness = certify(original, conjunction(candidates), solver)
@@ -72,9 +76,19 @@ def decompose_ltl(formula, env_vars, independent_groups, solver='nusmv'):
 
 
 def format_result(result):
-    lines = [f'LTL extraction: {result.status}']
-    label = 'Component' if result.status == 'certified' else 'Candidate (not certified)'
-    lines.extend(f'{label} {i}: {formula}' for i, formula in enumerate(result.components, 1))
+    lines = [f'Result: {result.status.upper()}']
+    label = 'Component' if result.status == 'certified' else 'Candidate'
+    for i, formula in enumerate(result.components, 1):
+        group = result.output_groups[i - 1] if i <= len(result.output_groups) else []
+        lines.extend(['', f'{label} {i}:',
+                      '  Environment vars: {' + ', '.join(result.env_vars) + '}',
+                      '  System vars: {' + ', '.join(group) + '}',
+                      '  Formula: ' + formula])
+    if result.status == 'certified':
+        lines.extend(['', 'Verification:',
+                      '  Original formula equivalent to component conjunction: YES',
+                      '  Realizability preservation: GUARANTEED',
+                      '  Under shared original inputs and the same Mealy/Moore convention.'])
     if result.residual:
         lines.append('Mixed requirements: ' + ' & '.join(result.residual))
     if result.reason:

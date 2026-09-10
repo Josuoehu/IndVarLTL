@@ -72,8 +72,9 @@ python scripts/general.py -f files/running_example.txt
 ```
 
 On Linux, select NuSMV or Aalta when prompted. On macOS, NuSMV is selected by
-default. The tool then prints the decomposition and asks whether another formula
-should be processed.
+default. The tool prints a compact variable partition. In an interactive terminal it then
+asks `Compute the full formula decomposition? [y/N]:`. Answer `y` to extract and
+certify components using that partition; Enter or `n` finishes the run.
 
 Select a backend explicitly on either platform with `--solver`:
 
@@ -256,3 +257,32 @@ arbitrary temporal invariants or guarantee extraction for every independent
 partition. NuSMV/Aalta launchers must already be configured (the CLI configures
 them normally). Semantic tests run with NuSMV when its executable and launcher
 are available; otherwise those integration tests are skipped.
+
+## Terminal workflow
+
+```bash
+# Interactive terminal: display groups, then offer full extraction
+python scripts/general.py --solver nusmv -f files/running_example.txt
+
+# Full extraction without the confirmation question
+python scripts/general.py --solver nusmv -f files/running_example.txt --decompose
+
+# Groups only, without the confirmation question
+python scripts/general.py --solver nusmv -f files/running_example.txt --partition-only
+```
+
+The last two flags are mutually exclusive. Non-interactive runs never ask the
+extraction question: they compute groups only unless `--decompose` is supplied.
+They require `-f`; declare environment variables with `env_vars:` in the file
+(otherwise they are taken to be empty). In non-interactive mode NuSMV is the
+default backend unless `--solver` is given. Each command handles one specification
+and exits, without a second continuation question.
+
+When `-f FILE` is supplied, the terminal and saved report show the original
+`Input formula` before the variable groups (excluding the `env_vars:` declaration).
+
+Partition-only output lists `Environment vars` and numbered `Independent system
+variable sets`. Full output uses `Result: CERTIFIED`, followed by each component's
+`Environment vars`, `System vars`, and `Formula`. An uncertified result uses
+`Candidate` instead of `Component` and includes the failure reason. File-based
+runs save the same result layout in `results/<input-name>_r.txt`.

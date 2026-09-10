@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import shlex
 import shutil
@@ -301,6 +302,11 @@ def parse_arguments():
         choices=("nusmv", "aalta"),
         help="Solver backend (default: NuSMV on macOS; prompt on Linux)",
     )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--decompose', action='store_true',
+                      help='Extract and certify formula components without asking')
+    mode.add_argument('--partition-only', action='store_true',
+                      help='Only compute variable groups; do not ask for extraction')
     return parser.parse_args()
 
 
@@ -310,6 +316,8 @@ def terminal_use(args=None):
         args = parse_arguments()
     # print("Entra aquí")
     if not args.filename:
+        if not sys.stdin.isatty():
+            raise SystemExit("Non-interactive execution requires -f FILE.")
         return "", [], ""
     else:
         if not os.path.exists(args.filename):
@@ -607,6 +615,8 @@ def full_process(first, is_nusmv, args=None):
         formula = no_file_terminal()
         env_vars = []
         file_name = ""
+    if file_name:
+        print('\nInput formula:\n  ' + formula.strip() + '\n')
     var_tree = parse_req_exp(formula, 'ltl')
     variables = var_list_exp(var_tree)
     unknown_env_vars = sorted(set(env_vars) - set(variables))
@@ -616,29 +626,47 @@ def full_process(first, is_nusmv, args=None):
             f"Environment variable(s){source} do not occur in the formula: "
             + ", ".join(unknown_env_vars)
         )
-    if check_is_temporal(var_tree):
-        sys_vars = variables.copy()
-        if not env_vars:
-            print("\nEnter the environment variables as a comma-separated list, "
-                  "or type '-' if there are none:")
-            res = input()
-            if res != "-":
+    temporal = check_is_temporal(var_tree)
+    if temporal and not env_vars and sys.stdin.isatty():
+        # An explicit empty declaration in a file also means no environment vars.
+        declared = file_name and any(
+            line.strip().lower().startswith('env_vars:')
+            for line in Path(file_name).read_text().splitlines()
+        )
+        if not declared:
+            res = input("\nEnter the environment variables as a comma-separated list, "
+                        "or type '-' if there are none:\n")
+            if res != '-':
                 env_vars = ask_for_env(variables, res)
-                sys_vars = not_in_v(env_vars, variables)
-        else:
-            sys_vars = not_in_v(env_vars, variables)
-        print("Computing the decomposition...")
-        time.sleep(1)
-        var_groups = partition_general(formula, sys_vars, env_vars.copy(), True, is_nusmv)
+    sys_vars = not_in_v(env_vars, variables)
+    print("Computing the variable decomposition...")
+    var_groups = partition_general(
+        formula, sys_vars, env_vars.copy(), temporal, is_nusmv
+    )
+    print("\n" + format_partition(env_vars, var_groups))
+    complete = getattr(args, 'decompose', False)
+    if not complete and not getattr(args, 'partition_only', False) and sys.stdin.isatty():
+        try:
+            complete = input("\nCompute the full formula decomposition? [y/N]: ").strip().lower() in ('y', 'yes')
+        except EOFError:
+            complete = False
+    form_groups = None
+    if complete:
+        print("\nComputing the full formula decomposition...")
         form_groups = decompose_ltl(
             formula, env_vars, var_groups, "nusmv" if is_nusmv else "aalta"
         )
-    else:
-        print("Computing the decomposition...")
-        time.sleep(1)
-        var_groups = partition_general(formula, variables, [], False, is_nusmv)
-        form_groups = get_the_partition(formula, var_tree, variables, var_groups, is_nusmv)
-    return var_groups, form_groups, file_name
+    return var_groups, form_groups, file_name, env_vars, formula
+
+
+def format_partition(env_vars, groups):
+    lines = ['Environment vars: {' + ', '.join(env_vars) + '}',
+             '', 'Independent system variable sets:']
+    lines.extend(f"  {i}: {{" + ', '.join(group) + '}'
+                 for i, group in enumerate(groups, 1))
+    if not groups:
+        lines.append('  {}')
+    return '\n'.join(lines)
 
 
 def get_so():
@@ -652,15 +680,16 @@ def get_so():
         quit("\nThis operating system is not supported.")
 
 
-def output_file(v_g, f_g, name):
+def output_file(v_g, f_g, name, env_vars=(), formula=None):
     # Creation of the output file
     input_path = Path(name)
     output_path = RESULTS_DIR / f'{input_path.stem}_r.txt'
     RESULTS_DIR.mkdir(exist_ok=True)
     with output_path.open('w') as out_file:
         out_file.write(f"Decomposition results for {input_path.name}.\n\n")
-        out_file.write("The variables are decomposed into the following groups: ")
-        __print_variables(out_file, v_g)
+        if formula is not None:
+            out_file.write("Input formula:\n  " + formula.strip() + "\n\n")
+        out_file.write(format_partition(env_vars, v_g) + "\n")
         if isinstance(f_g, DecompositionResult):
             out_file.write(format_result(f_g) + "\n")
         elif f_g is not None:
@@ -677,23 +706,11 @@ def __print_variables(out_file, v_g):
 
 
 def main_in(first, program_name, is_nusmv, args=None):
-    var_groups, form_groups, file_name = full_process(first, is_nusmv, args)
-    print("\nVariable decomposition:\n" + str(var_groups))
+    var_groups, form_groups, file_name, env_vars, formula = full_process(first, is_nusmv, args)
     if isinstance(form_groups, DecompositionResult):
-        print(format_result(form_groups))
-    elif form_groups is not None:
-        print("Formula decomposition:\n" + str(form_groups))
-    if file_name != "":
-        # print("Entra en el if the creacion de fichero.")
-        output_file(var_groups, form_groups, file_name)
-    time.sleep(1)
-    print("\nWould you like to continue using " + program_name + "?\n"
-          "Enter 1 to continue, or any other value to exit:")
-    res1 = input()
-    if res1 == '1':
-        main_in(False, program_name, is_nusmv, args)
-    else:
-        print("\nSee you next time!")
+        print("\n" + format_result(form_groups))
+    if file_name:
+        output_file(var_groups, form_groups, file_name, env_vars, formula)
 
 
 def main():
@@ -714,7 +731,7 @@ def main():
         )
         if not launcher.is_file():
             pregunta_path(os_name == "linux", is_nusmv)
-    elif os_name == "macos":
+    elif os_name == "macos" or not sys.stdin.isatty():
         print("NuSMV will be used by default. Use --solver aalta to select Aalta.")
         if not (SCRIPTS_DIR / "call_nusmv.sh").is_file():
             pregunta_path(False, True)
