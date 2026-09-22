@@ -1,7 +1,7 @@
 # IndVarLTL
 
-IndVarLTL is a research prototype for decomposing Boolean variables in Linear
-Temporal Logic (LTL) formulas. It uses repeated satisfiability/model-checking
+IndVarLTL is a research prototype for identifying independent groups of variables 
+in Linear Temporal Logic (LTL) formulas. It uses repeated satisfiability/model-checking
 queries to identify groups of system variables that depend on one another and
 can therefore be handled independently of the other groups.
 
