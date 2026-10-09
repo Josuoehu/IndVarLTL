@@ -17,6 +17,24 @@ class ExtractionTests(unittest.TestCase):
         self.assertEqual(polarities(parse_formula('G(a -> !b)')), {'a': {False}, 'b': {False}})
         self.assertEqual(polarities(parse_formula('a <-> b')), {'a': {True, False}, 'b': {True, False}})
 
+    def test_release_serialization_is_backend_specific(self):
+        formula = parse_formula('G(a R (b U c))')
+        self.assertEqual(formula.text(), 'G((a R (b U c)))')
+        self.assertEqual(formula.text('aalta'), 'G((a R (b U c)))')
+        self.assertEqual(formula.text('nusmv'), 'G((a V (b U c)))')
+        self.assertEqual(parse_formula(formula.text()), formula)
+
+    def test_release_parser_precedence_and_detection(self):
+        from general import check_is_temporal
+        from req_parser import parse_req_exp
+        self.assertTrue(check_is_temporal(parse_req_exp('a R b', 'ltl')))
+        self.assertEqual(parse_formula('a R b U c'),
+                         parse_formula('a R (b U c)'))
+        self.assertEqual(parse_formula('a R b & c'),
+                         parse_formula('(a R b) & c'))
+        self.assertEqual(polarities(parse_formula('!(a R b)')),
+                         {'a': {False}, 'b': {False}})
+
     def test_invalid_partition_rejected_before_solver(self):
         for groups in ([['a'], ['a', 'b']], [['a']], [['a'], []]):
             with self.assertRaises(ValueError):
@@ -42,6 +60,42 @@ class SemanticTests(unittest.TestCase):
     def assertEquivalent(self, left, right):
         valid, witness = certify(parse_formula(left), parse_formula(right), 'nusmv')
         self.assertTrue(valid, witness)
+
+    def test_release_equivalence_and_context(self):
+        self.assertEquivalent('a R b', '!((!a) U (!b))')
+        for text in ('!(a R b)', 'a & (a R b)', 'a | (a R b)',
+                     'G(a) & (a R b)', 'a R (b U c)'):
+            with self.subTest(text=text):
+                formula = parse_formula(text)
+                self.assertTrue(certify(formula, simplify(formula), 'nusmv')[0])
+        # Release permits b forever without ever requiring a.
+        self.assertTrue(satisfiable(parse_formula('G(!a) & G(b) & (a R b)'), 'nusmv')[0])
+        self.assertFalse(satisfiable(parse_formula('!b & (a R b)'), 'nusmv')[0])
+
+    def test_release_partition_and_extraction(self):
+        from general import partition_general
+        formula = '(a R b) & G(c)'
+        groups = partition_general(formula, ['a', 'b', 'c'], [], True, True)
+        self.assertEqual({frozenset(g) for g in groups},
+                         {frozenset(('a', 'b')), frozenset(('c',))})
+        result = decompose_ltl(formula, [], groups)
+        self.assertEqual(result.status, 'certified', result.reason)
+        self.assertTrue(any(' R ' in c for c in result.components))
+        self.assertFalse(any(' V ' in c for c in result.components))
+
+    def test_until_user_formula_is_unsatisfiable(self):
+        formula = parse_formula('q & G(!q | X(q)) & ((p & a)U !q) & G(F(!a))')
+        self.assertEqual(formula.variables, {'q', 'p', 'a'})
+        self.assertFalse(satisfiable(formula, 'nusmv')[0])
+
+    def test_until_normalization_and_temporal_context(self):
+        for text in ('!(a U b)', 'a & (a U b)', 'G(a) & (a U b)',
+                     'a | (a U b)', '!(a U (b U c))'):
+            with self.subTest(text=text):
+                formula = parse_formula(text)
+                self.assertTrue(certify(formula, simplify(formula), 'nusmv')[0])
+        result = decompose_ltl('(a U b) & G(c)', [], [['a', 'b'], ['c']])
+        self.assertEqual(result.status, 'certified', result.reason)
 
     def test_global_context_recovers_independent_factors(self):
         result = decompose_ltl('G(b) & G(a | !b)', [], [['a'], ['b']])

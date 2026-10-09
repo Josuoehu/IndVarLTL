@@ -8,6 +8,8 @@ import tempfile
 import time
 from pathlib import Path
 
+from ltl_ast import parse_formula
+from ltl_certify import satisfiable
 from ltl_decompose import decompose_ltl, DecompositionResult, format_result
 from call import SolverError, call_nusmv, call_get_path
 from generate_nuxmv import create_nusmv_file
@@ -168,6 +170,9 @@ def partition(fi, cv):
 
 
 def partition_general(fi, cv, treated, is_temporal, is_nusmv):
+    # Adapt user Release syntax to the selected backend for partition queries.
+    if "R" in fi:
+        fi = parse_formula(fi).text("nusmv" if is_nusmv else "aalta")
     expected_variables = list(cv)
     if is_nusmv:
         groups = partition_recursive(fi, cv, treated, is_temporal)
@@ -318,13 +323,13 @@ def terminal_use(args=None):
     if not args.filename:
         if not sys.stdin.isatty():
             raise SystemExit("Non-interactive execution requires -f FILE.")
-        return "", [], ""
+        return "", None, ""
     else:
         if not os.path.exists(args.filename):
             parser.error(f"file not found: {args.filename}")
         else:
             formula_parts = []
-            e_vars = []
+            e_vars = None
             env_declaration_seen = False
             with open(args.filename, "r") as input_file:
                 for line in input_file:
@@ -588,17 +593,17 @@ def extract_env_vars(res):
 def check_is_temporal(var_tree):
     if not (type(var_tree) == str):
         if len(var_tree) == 2:
-            if var_tree[0] == "F" or var_tree[0] == "G" or var_tree[0] == "X":
+            if var_tree[0] in ("F", "G", "X", "U", "R"):
                 return True
             else:
                 return check_is_temporal(var_tree[1])
         elif len(var_tree) == 3:
-            if var_tree[0] == "F" or var_tree[0] == "G" or var_tree[0] == "X":
+            if var_tree[0] in ("F", "G", "X", "U", "R"):
                 return True
             else:
                 return check_is_temporal(var_tree[1]) or check_is_temporal(var_tree[2])
         else:
-            if var_tree[0] == "F" or var_tree[0] == "G" or var_tree[0] == "X":
+            if var_tree[0] in ("F", "G", "X", "U", "R"):
                 return True
             else:
                 return False
@@ -613,12 +618,23 @@ def full_process(first, is_nusmv, args=None):
         # print(file_name)
     else:
         formula = no_file_terminal()
-        env_vars = []
+        env_vars = None
         file_name = ""
     if file_name:
         print('\nInput formula:\n  ' + formula.strip() + '\n')
     var_tree = parse_req_exp(formula, 'ltl')
     variables = var_list_exp(var_tree)
+    if env_vars is None:
+        if not sys.stdin.isatty():
+            raise SystemExit(
+                "Environment variables are not specified.\n"
+                "Add 'env_vars: a,b' to the input file, or an empty 'env_vars:' "
+                "if all variables are system variables."
+            )
+        print("Formula variables: {" + ', '.join(variables) + "}")
+        res = input("Enter environment variables separated by commas, "
+                    "or '-' if all variables are system variables:\n")
+        env_vars = [] if res.strip() == '-' else ask_for_env(variables, res)
     unknown_env_vars = sorted(set(env_vars) - set(variables))
     if unknown_env_vars:
         source = f" in {file_name}" if file_name else ""
@@ -626,22 +642,16 @@ def full_process(first, is_nusmv, args=None):
             f"Environment variable(s){source} do not occur in the formula: "
             + ", ".join(unknown_env_vars)
         )
-    temporal = check_is_temporal(var_tree)
-    if temporal and not env_vars and sys.stdin.isatty():
-        # An explicit empty declaration in a file also means no environment vars.
-        declared = file_name and any(
-            line.strip().lower().startswith('env_vars:')
-            for line in Path(file_name).read_text().splitlines()
-        )
-        if not declared:
-            res = input("\nEnter the environment variables as a comma-separated list, "
-                        "or type '-' if there are none:\n")
-            if res != '-':
-                env_vars = ask_for_env(variables, res)
     sys_vars = not_in_v(env_vars, variables)
+    sat, _ = satisfiable(parse_formula(formula), "nusmv" if is_nusmv else "aalta")
+    if not sat:
+        raise SystemExit("Result: UNSATISFIABLE\nThe formula has no satisfying trace "
+                         "and is not realizable. No variable decomposition was performed.")
+    print("Environment vars: {" + ", ".join(env_vars) + "}")
+    print("System vars: {" + ", ".join(sys_vars) + "}")
     print("Computing the variable decomposition...")
     var_groups = partition_general(
-        formula, sys_vars, env_vars.copy(), temporal, is_nusmv
+        formula, sys_vars, env_vars.copy(), True, is_nusmv
     )
     print("\n" + format_partition(env_vars, var_groups))
     complete = getattr(args, 'decompose', False)

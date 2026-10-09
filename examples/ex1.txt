@@ -1,0 +1,2 @@
+q & G(!q | X(q)) & ((p & a)U !q) & G(F(!a))
+env_vars:

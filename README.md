@@ -100,14 +100,14 @@ Run the program without `-f` to enter a one-line formula at the prompt:
 python scripts/general.py
 ```
 
-For a temporal formula, the program also asks for its environment variables.
+All formulas are interpreted as LTL, including formulas without temporal
+operators. The program asks for environment variables when not declared.
 Enter a comma-separated list such as `request,reset`, or enter `-` if there are
 none.
 
 ## Input format
 
-An input file contains a formula, optionally split across several lines. For a
-temporal formula, environment variables may be declared on the final line:
+An input file contains a formula, optionally split across several lines. Environment variables may be declared on the final line:
 
 ```text
 G((p -> X(v & !t)) &
@@ -134,18 +134,21 @@ and underscores.
 | Eventually | `F(p)` |
 | Globally | `G(p)` |
 
-Temporal operators must be followed by a parenthesized expression. Binary
-temporal operators such as Until (`U`) and Release (`R`) are not currently
-supported.
+Unary temporal operators must be followed by a parenthesized expression.
+Until (`U`) and Release (`R`) are binary operators, for example `(p & a) U !q`
+and `a R b`. They have equal precedence, bind more tightly than conjunction,
+and associate to the right; use parentheses to make grouping explicit.
+Write Release as `R` in input; component output also preserves `R`.
+Only solver queries adapt its spelling: `V` for NuSMV and `R` for Aalta.
 
 ## Output
 
-Every run prints the variable decomposition. For propositional formulas, it
-also prints the formula decomposition:
+Every run prints the variable decomposition. Full formula extraction is optional
+for all formulas, including those without temporal operators:
 
 - **Variable decomposition**: lists of variables that belong to the same
   dependent component.
-- **Formula decomposition**: simplified components for propositional input.
+- **Formula decomposition**: certified LTL components when extraction succeeds.
 
 For LTL input, the output includes an extraction status:
 
@@ -252,7 +255,7 @@ under synchronous synthesis with the original inputs observable to every
 component, disjoint controlled outputs, and the same Mealy/Moore convention.
 It does not decide realizability or synthesize controllers.
 
-The extractor supports the existing Boolean/X/F/G fragment. It does not infer
+The extractor supports the existing Boolean/X/F/G/U/R fragment. It does not infer
 arbitrary temporal invariants or guarantee extraction for every independent
 partition. NuSMV/Aalta launchers must already be configured (the CLI configures
 them normally). Semantic tests run with NuSMV when its executable and launcher
@@ -274,7 +277,8 @@ python scripts/general.py --solver nusmv -f files/running_example.txt --partitio
 The last two flags are mutually exclusive. Non-interactive runs never ask the
 extraction question: they compute groups only unless `--decompose` is supplied.
 They require `-f`; declare environment variables with `env_vars:` in the file
-(otherwise they are taken to be empty). In non-interactive mode NuSMV is the
+(a missing declaration is an error; an empty declaration explicitly means no
+environment variables). In non-interactive mode NuSMV is the
 default backend unless `--solver` is given. Each command handles one specification
 and exits, without a second continuation question.
 
@@ -286,3 +290,17 @@ variable sets`. Full output uses `Result: CERTIFIED`, followed by each component
 `Environment vars`, `System vars`, and `Formula`. An uncertified result uses
 `Candidate` instead of `Component` and includes the failure reason. File-based
 runs save the same result layout in `results/<input-name>_r.txt`.
+
+Before variable partitioning, the CLI checks satisfiability. An inconsistent
+specification is reported as `UNSATISFIABLE`, with no partition computed.
+For example, `q & G(!q | X(q)) & ((p & a) U !q) & G(F(!a))` is inconsistent:
+`q` stays true forever, but strong Until requires `!q` eventually.
+With all variables controlled by the system, enter `-` when asked for environment
+variables, or include an empty `env_vars:` declaration in the input file.
+
+All inputs use LTL trace semantics, even `a & b`. No operator-based switch to a
+propositional mode is made. If `env_vars:` is missing, interactive runs ask for
+the environment variables; the remaining formula variables are system variables.
+An explicit empty `env_vars:` suppresses this question and marks every variable
+as system-controlled. Non-interactive runs require this declaration, including
+with `--decompose` or `--partition-only`.

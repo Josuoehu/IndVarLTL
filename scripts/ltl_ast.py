@@ -1,4 +1,4 @@
-"""Immutable syntax for the prototype's Boolean/X/F/G fragment."""
+"""Immutable syntax for the prototype's Boolean/X/F/G/U/R fragment."""
 import re
 from dataclasses import dataclass
 from req_parser import parse_req_exp
@@ -15,14 +15,17 @@ class Formula:
             return set() if self.op in ('TRUE', 'FALSE') else {self.op}
         return set().union(*(a.variables for a in self.args))
 
-    def text(self, solver='nusmv'):
+    def text(self, solver=None):
+        """Render user syntax by default; adapt Release only for a backend."""
         if not self.args:
             if self.op in ('TRUE', 'FALSE') and solver == 'aalta':
                 return self.op.lower()
             return self.op
         if len(self.args) == 1:
             return f'{self.op}({self.args[0].text(solver)})'
-        return '(' + f' {self.op} '.join(a.text(solver) for a in self.args) + ')'
+        operator = 'V' if self.op == 'R' and solver == 'nusmv' else self.op
+        return '(' + f' {operator} '.join(a.text(solver) for a in self.args) + ')'
+
 
 
 def parse_formula(text):

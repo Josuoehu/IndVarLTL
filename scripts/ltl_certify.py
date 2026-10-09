@@ -25,7 +25,7 @@ def satisfiable(formula, solver):
         model, trace = root / 'model.smv', root / 'trace.xml'
         declarations = '\n'.join(f'{v}: boolean;' for v in sorted(formula.variables))
         model.write_text('MODULE main\n' + ('VAR\n' + declarations if declarations else ''))
-        command = (f'go;check_ltlspec -p "!({formula.text()})"; '
+        command = (f'go;check_ltlspec -p "!({formula.text('nusmv')})"; '
                    f'show_traces -p 4 -o "{trace}";quit')
         completed = _run([SCRIPTS_DIR / 'call_nusmv.sh', command, model], cwd=root)
         answers = re.findall(r'-- specification .* is (true|false)\s*$', completed.stdout, re.M)

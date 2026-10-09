@@ -17,6 +17,9 @@ def nnf(n, negative=False):
     if op in ('&', '|'):
         return F(({'&': '|', '|': '&'}[op] if negative else op),
                  tuple(nnf(x, negative) for x in a))
+    if op in ('U', 'R'):
+        return F(({'U': 'R', 'R': 'U'}[op] if negative else op),
+                 tuple(nnf(x, negative) for x in a))
     if op in ('G', 'F', 'X'):
         return F(({'G': 'F', 'F': 'G', 'X': 'X'}[op] if negative else op),
                  (nnf(a[0], negative),))
@@ -54,6 +57,9 @@ def _pass(n, now, always, contextual=True):
         return n if value is None else TRUE if value == sign else FALSE
     if not n.args:
         return n
+    if n.op in ('U', 'R'):
+        # Both operands may be evaluated at future positions.
+        return F(n.op, tuple(_pass(x, {}, always, contextual) for x in n.args))
     if n.op in ('X', 'F', 'G'):
         # Current-state facts never cross a temporal boundary.
         child = _pass(n.args[0], {}, always, contextual)
