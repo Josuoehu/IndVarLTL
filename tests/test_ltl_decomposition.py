@@ -83,6 +83,18 @@ class SemanticTests(unittest.TestCase):
         self.assertTrue(any(' R ' in c for c in result.components))
         self.assertFalse(any(' V ' in c for c in result.components))
 
+    def test_compact_implication_partition_uses_solver_syntax(self):
+        from general import partition_general
+        formula = 'G((p->X(a)) & (!p -> X(X(b))) & !b)'
+        for inputs, outputs in ((['p'], ['a', 'b']), ([], ['p', 'a', 'b'])):
+            with self.subTest(inputs=inputs):
+                groups = partition_general(formula, outputs, inputs.copy(), True, True)
+                self.assertEqual({frozenset(g) for g in groups},
+                                 {frozenset([v]) for v in outputs})
+                result = decompose_ltl(formula, inputs, groups)
+                self.assertEqual(result.status, 'certified', result.reason)
+        self.assertEquivalent(formula, 'G(p) & X(G(a)) & G(!b)')
+
     def test_until_user_formula_is_unsatisfiable(self):
         formula = parse_formula('q & G(!q | X(q)) & ((p & a)U !q) & G(F(!a))')
         self.assertEqual(formula.variables, {'q', 'p', 'a'})

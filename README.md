@@ -5,6 +5,10 @@ IndVarLTL is a research prototype for identifying independent groups of variable
 Environment variables are treated as shared inputs: they influence the
 decomposition but are not included in the resulting system-variable groups.
 
+> **Formula decomposition is UNDER DEVELOPMENT.** Extracting component formulas
+> from the independent variable groups is experimental and incomplete. This
+> applies both to `--decompose` and to full decomposition requested interactively.
+
 ## Current capabilities
 
 - Parse propositional formulas and LTL formulas over Boolean variables.
@@ -12,7 +16,7 @@ decomposition but are not included in the resulting system-variable groups.
   [Aalta](https://github.com/lijwen2748/aalta) as the back-end solver.
 - Read a formula interactively or from a multiline text file.
 - Write file-based results to the `results/` directory.
-- Derive formula components for propositional and supported temporal formulas.
+- **UNDER DEVELOPMENT:** derive formula components for supported LTL formulas.
 - Certify temporal components by checking both directions of LTL equivalence.
 
 For LTL input, extraction uses the known output partition, exact rewriting,
@@ -70,7 +74,7 @@ python scripts/general.py -f files/running_example.txt
 
 On Linux, select NuSMV or Aalta when prompted. On macOS, NuSMV is selected by
 default. The tool prints a compact variable partition. In an interactive terminal it then
-asks `Compute the full formula decomposition? [y/N]:`. Answer `y` to extract and
+asks `Compute the full formula decomposition (under development)? [y/N]:`. Answer `y` to extract and
 certify components using that partition; Enter or `n` finishes the run.
 
 Select a backend explicitly on either platform with `--solver`:
@@ -215,7 +219,7 @@ Run the regression tests with:
 python -m unittest discover -s tests -v
 ```
 
-## Temporal component extraction
+## Temporal component extraction (UNDER DEVELOPMENT)
 
 The program first rewrites conjunctions under `G`, `X`, and implications, and
 assigns requirements to the known output groups. For remaining mixed
@@ -260,11 +264,19 @@ are available; otherwise those integration tests are skipped.
 
 ## Terminal workflow
 
+| Flag | Purpose |
+| --- | --- |
+| `-h`, `--help` | Show command-line help. |
+| `-f FILE` | Read a specification from a file. |
+| `--solver {nusmv,aalta}` | Select the solver backend. |
+| `--decompose` | **UNDER DEVELOPMENT:** extract and certify formula components without asking. |
+| `--partition-only` | Compute only the independent variable groups; skip formula extraction and its prompt. |
+
 ```bash
 # Interactive terminal: display groups, then offer full extraction
 python scripts/general.py --solver nusmv -f files/running_example.txt
 
-# Full extraction without the confirmation question
+# UNDER DEVELOPMENT: full formula extraction without the confirmation question
 python scripts/general.py --solver nusmv -f files/running_example.txt --decompose
 
 # Groups only, without the confirmation question

@@ -77,7 +77,7 @@ class TerminalFlowTests(unittest.TestCase):
     def test_yes_reuses_partition(self):
         response, extract, ask = self.run_flow('y')
         extract.assert_called_once_with('G(p -> a)', ['p'], [['a']], 'nusmv')
-        ask.assert_called_once_with('\nCompute the full formula decomposition? [y/N]: ')
+        ask.assert_called_once_with('\nCompute the full formula decomposition (under development)? [y/N]: ')
         self.assertEqual(response[1].status, 'certified')
 
     def test_no_or_enter_stops_after_partition(self):

@@ -170,9 +170,9 @@ def partition(fi, cv):
 
 
 def partition_general(fi, cv, treated, is_temporal, is_nusmv):
-    # Adapt user Release syntax to the selected backend for partition queries.
-    if "R" in fi:
-        fi = parse_formula(fi).text("nusmv" if is_nusmv else "aalta")
+    # Serialize all input through the AST: solver lexers require operator
+    # boundaries (e.g. p->X(a)), and Release has backend-specific syntax.
+    fi = parse_formula(fi).text("nusmv" if is_nusmv else "aalta")
     expected_variables = list(cv)
     if is_nusmv:
         groups = partition_recursive(fi, cv, treated, is_temporal)
@@ -309,7 +309,7 @@ def parse_arguments():
     )
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--decompose', action='store_true',
-                      help='Extract and certify formula components without asking')
+                      help='UNDER DEVELOPMENT: extract and certify formula components without asking')
     mode.add_argument('--partition-only', action='store_true',
                       help='Only compute variable groups; do not ask for extraction')
     return parser.parse_args()
@@ -350,6 +350,7 @@ def no_file_terminal():
     # When there is no file in the arguments
     print("\nEnter the formula:")
     formula = input()
+    print()
     return formula
 
 
@@ -635,6 +636,7 @@ def full_process(first, is_nusmv, args=None):
         res = input("Enter environment variables separated by commas, "
                     "or '-' if all variables are system variables:\n")
         env_vars = [] if res.strip() == '-' else ask_for_env(variables, res)
+        print()
     unknown_env_vars = sorted(set(env_vars) - set(variables))
     if unknown_env_vars:
         source = f" in {file_name}" if file_name else ""
@@ -657,7 +659,7 @@ def full_process(first, is_nusmv, args=None):
     complete = getattr(args, 'decompose', False)
     if not complete and not getattr(args, 'partition_only', False) and sys.stdin.isatty():
         try:
-            complete = input("\nCompute the full formula decomposition? [y/N]: ").strip().lower() in ('y', 'yes')
+            complete = input("\nCompute the full formula decomposition (under development)? [y/N]: ").strip().lower() in ('y', 'yes')
         except EOFError:
             complete = False
     form_groups = None
