@@ -1,0 +1,2 @@
+G(!a & !b) | G(p & a & b)
+env_vars:
