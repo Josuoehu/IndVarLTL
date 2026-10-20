@@ -659,7 +659,7 @@ def full_process(first, is_nusmv, args=None):
     complete = getattr(args, 'decompose', False)
     if not complete and not getattr(args, 'partition_only', False) and sys.stdin.isatty():
         try:
-            complete = input("\nCompute the full formula decomposition (under development)? [y/N]: ").strip().lower() in ('y', 'yes')
+            complete = input("\nCompute the full formula decomposition (under development)? [y/n]: ").strip().lower() in ('y', 'yes')
         except EOFError:
             complete = False
     form_groups = None
