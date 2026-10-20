@@ -26,7 +26,7 @@ components with the implemented rules.
 
 ## Requirements
 
-- Python 3
+- Python 3.8 or newer
 - `parsimonious==0.10.0` (installed through `requirements.txt`)
 - One external solver:
   - NuSMV on macOS or Linux; or
@@ -74,7 +74,7 @@ python scripts/general.py -f files/running_example.txt
 
 On Linux, select NuSMV or Aalta when prompted. On macOS, NuSMV is selected by
 default. The tool prints a compact variable partition. In an interactive terminal it then
-asks `Compute the full formula decomposition (under development)? [y/N]:`. Answer `y` to extract and
+asks `Compute the full formula decomposition (under development)? [y/n]:`. Answer `y` to extract and
 certify components using that partition; Enter or `n` finishes the run.
 
 Select a backend explicitly on either platform with `--solver`:

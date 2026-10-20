@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from call import SolverError
 from ltl_ast import parse_formula, Formula, TRUE
 from ltl_simplify import simplify, polarities
-from ltl_decompose import decompose_ltl
+from ltl_decompose import decompose_ltl, format_result
 from ltl_certify import certify, satisfiable
 
 
@@ -128,6 +128,15 @@ class SemanticTests(unittest.TestCase):
             result = decompose_ltl(formula, [], [['a'], ['b']])
             self.assertEqual(result.status, 'incomplete')
             self.assertEqual(result.counterexample['direction'], 'components_to_original')
+
+    def test_incomplete_result_renders_nusmv_trace_as_states(self):
+        result = decompose_ltl('!c & G(!c <-> X(c)) & G(c <-> a)',
+                               [], [['c'], ['a']])
+        self.assertEqual(result.status, 'incomplete')
+        output = format_result(result)
+        self.assertIn('Counterexample:\n  State 1:', output)
+        self.assertIn('Loop starts at state', output)
+        self.assertNotIn('<counter-example', output)
 
     def test_initial_fact_does_not_fix_future(self):
         original = parse_formula('b & X(!b)')

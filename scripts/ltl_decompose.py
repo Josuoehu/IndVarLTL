@@ -1,5 +1,7 @@
 """Construct and certify LTL factors for an already supplied output partition."""
 from dataclasses import dataclass, field
+from typing import Optional
+import xml.etree.ElementTree as ET
 from call import SolverError
 from ltl_ast import parse_formula, conjunction, conjuncts, substitute, TRUE, FALSE
 from ltl_simplify import simplify, polarities
@@ -11,8 +13,8 @@ class DecompositionResult:
     status: str
     components: list = field(default_factory=list)
     residual: list = field(default_factory=list)
-    counterexample: dict | None = None
-    reason: str | None = None
+    counterexample: Optional[dict] = None
+    reason: Optional[str] = None
     env_vars: list = field(default_factory=list)
     output_groups: list = field(default_factory=list)
 
@@ -95,5 +97,26 @@ def format_result(result):
         lines.append(result.reason)
     if result.counterexample:
         lines.append('Failed implication: ' + result.counterexample['direction'])
-        lines.append(result.counterexample['trace'])
+        lines.append('Counterexample:')
+        lines.extend(format_counterexample(result.counterexample['trace']))
     return '\n'.join(lines)
+
+
+def format_counterexample(trace):
+    """Present NuSMV's XML trace as states rather than printing XML markup."""
+    if not trace.lstrip().startswith('<?xml'):
+        return ['  ' + line for line in trace.strip().splitlines()]
+    try:
+        root = ET.fromstring(trace)
+    except ET.ParseError:
+        return ['  NuSMV returned a counterexample that could not be parsed.']
+    lines = []
+    for node in root.findall('node'):
+        for state in node.findall('state'):
+            values = [f"{value.get('variable')}={value.text.strip()}"
+                      for value in state.findall('value') if value.text]
+            lines.append(f"  State {state.get('id')}: " + ', '.join(values))
+    loop = root.findtext('loops')
+    if loop and loop.strip():
+        lines.append(f'  Loop starts at state {loop.strip()}.')
+    return lines or ['  No states were present in the counterexample.']
